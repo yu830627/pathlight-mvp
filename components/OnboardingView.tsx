@@ -26,68 +26,73 @@ export default function OnboardingView({
     }
   };
 
-  const stepConfig = {
+  const steps = {
     1: {
-      label: "你好，我是引路",
-      question: "請問你的名字是？",
+      tag: "Step 1 of 3",
+      question: "你的名字是？",
       placeholder: "輸入你的名字...",
       value: name,
       onChange: setName,
-      hint: "這樣未來的你才能直接叫你的名字",
+      hint: "未來的你會直接叫你的名字",
+      isText: true,
     },
     2: {
-      label: "認識你",
+      tag: "Step 2 of 3",
       question: "你最重要的一個人生目標是什麼？",
       placeholder: "例如：轉職到產品設計、財務自由、完成第一本書...",
       value: mainGoal,
       onChange: setMainGoal,
-      hint: "不必完美，說出你心裡最真實的那個",
+      hint: "說出你心裡最真實的那個，不必完美",
+      isText: false,
     },
     3: {
-      label: "了解你",
-      question: "你現在最大的挑戰或卡關點是什麼？",
+      tag: "Step 3 of 3",
+      question: "你現在最大的卡關點是什麼？",
       placeholder: "例如：不知道從哪裡開始、每天拖延、缺乏自信...",
       value: currentChallenge,
       onChange: setCurrentChallenge,
       hint: "未來的你需要知道你現在卡在哪裡",
+      isText: false,
     },
   };
 
-  const config = stepConfig[step];
+  const config = steps[step];
 
   return (
-    <div className="w-full max-w-lg space-y-8">
+    <div className="w-full max-w-lg space-y-8 animate-in fade-in duration-500">
       {/* Logo */}
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2">
-          <span className="text-2xl font-bold tracking-tight text-primary">引路</span>
-          <span className="text-sm text-muted-foreground font-mono">Pathlight</span>
+        <div className="inline-flex flex-col items-center gap-1">
+          <span className="text-3xl font-bold tracking-tight bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
+            引路
+          </span>
+          <span className="text-xs text-muted-foreground font-mono tracking-[0.3em] uppercase">Pathlight</span>
         </div>
         <p className="text-sm text-muted-foreground">照亮前方的路</p>
       </div>
 
       {/* Progress */}
-      <div className="flex gap-2">
+      <div className="flex gap-1.5">
         {([1, 2, 3] as Step[]).map((s) => (
           <div
             key={s}
-            className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-              s <= step ? "bg-primary" : "bg-muted"
+            className={`h-0.5 flex-1 rounded-full transition-all duration-500 ${
+              s <= step ? "bg-primary" : "bg-border"
             }`}
           />
         ))}
       </div>
 
-      <Card className="border-border/50">
-        <CardHeader className="pb-2">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest">{config.label}</p>
-          <h2 className="text-xl font-semibold leading-tight">{config.question}</h2>
+      <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+        <CardHeader className="pb-3">
+          <p className="text-xs text-muted-foreground font-mono tracking-widest uppercase">{config.tag}</p>
+          <h2 className="text-xl font-semibold leading-snug mt-1">{config.question}</h2>
         </CardHeader>
         <CardContent className="space-y-4">
-          {step === 1 ? (
+          {config.isText ? (
             <input
               type="text"
-              className="w-full bg-input/50 border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-base"
+              className="w-full bg-background/50 border border-border/50 rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 text-base transition-colors"
               placeholder={config.placeholder}
               value={config.value}
               onChange={(e) => config.onChange(e.target.value)}
@@ -96,7 +101,7 @@ export default function OnboardingView({
             />
           ) : (
             <Textarea
-              className="min-h-[100px] resize-none bg-input/50 text-base"
+              className="min-h-[100px] resize-none bg-background/50 border-border/50 text-base focus:border-primary/50"
               placeholder={config.placeholder}
               value={config.value}
               onChange={(e) => config.onChange(e.target.value)}
@@ -105,17 +110,17 @@ export default function OnboardingView({
           )}
           <p className="text-xs text-muted-foreground">{config.hint}</p>
           <Button
-            className="w-full"
+            className="w-full font-medium bg-primary hover:bg-primary/90 transition-all"
             onClick={handleNext}
             disabled={!config.value.trim()}
           >
-            {step === 3 ? "開始引路" : "繼續"}
+            {step === 3 ? "開始引路" : "繼續 →"}
           </Button>
         </CardContent>
       </Card>
 
-      <p className="text-center text-xs text-muted-foreground">
-        你的資料只存在這個裝置上，不會上傳到任何地方
+      <p className="text-center text-xs text-muted-foreground/60">
+        你的資料只存在這個裝置上
       </p>
     </div>
   );

@@ -50,21 +50,21 @@ export default function ResultView({
   };
 
   return (
-    <div className="w-full max-w-lg space-y-6">
-      <div className="text-center space-y-2">
+    <div className="w-full max-w-lg space-y-5 animate-in fade-in duration-500">
+      <div className="text-center space-y-1.5">
         <span className="text-xs text-muted-foreground font-mono tracking-widest uppercase">引路 Pathlight</span>
-        <h1 className="text-2xl font-semibold mt-2">
+        <h1 className="text-2xl font-semibold mt-1.5">
           {completed ? `${profile.name}，你做到了` : `${profile.name}，明天還有機會`}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {completed ? "未來的你有話要說" : "後悔版的你有話要說"}
+          {completed ? "成功版的你有話要說" : "後悔版的你有話要說"}
         </p>
       </div>
 
       {/* Video Player */}
-      <div className={`relative rounded-xl overflow-hidden border ${
-        completed ? "border-amber-500/30" : "border-red-500/20"
-      } bg-black aspect-video`}>
+      <div className={`relative rounded-2xl overflow-hidden border ${
+        completed ? "border-amber-500/30 shadow-amber-500/10" : "border-red-500/20 shadow-red-500/10"
+      } bg-black aspect-video shadow-lg`}>
         <video
           ref={videoRef}
           src={videoSrc}
@@ -76,18 +76,18 @@ export default function ResultView({
         {!videoPlaying && (
           <button
             onClick={handlePlay}
-            className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 hover:bg-black/50 transition-colors group"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/50 hover:bg-black/40 transition-colors group"
           >
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all group-hover:scale-105 ${
+            <div className={`w-18 h-18 w-[72px] h-[72px] rounded-full flex items-center justify-center border-2 transition-all duration-200 group-hover:scale-110 ${
               completed
-                ? "border-amber-400 bg-amber-500/20"
-                : "border-red-400 bg-red-500/20"
+                ? "border-amber-400/80 bg-amber-500/20 shadow-lg shadow-amber-500/20"
+                : "border-red-400/80 bg-red-500/20 shadow-lg shadow-red-500/20"
             }`}>
-              <svg className="w-6 h-6 ml-1 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-7 h-7 ml-1 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
             </div>
-            <span className="text-sm text-white/80">
+            <span className="text-sm text-white/70 font-medium">
               {completed ? "聽未來的你說" : "聽後悔版的你說"}
             </span>
           </button>
@@ -95,29 +95,25 @@ export default function ResultView({
       </div>
 
       {/* Message */}
-      <Card className={`border ${completed ? "border-amber-500/20 bg-amber-500/5" : "border-border/50"}`}>
-        <CardContent className="pt-5">
+      <Card className={`border ${
+        completed ? "border-amber-500/20 bg-amber-500/5" : "border-border/40 bg-card/40"
+      }`}>
+        <CardContent className="pt-4 pb-4">
           <p className="text-sm leading-relaxed text-foreground/80 italic">
             &ldquo;{message}&rdquo;
           </p>
         </CardContent>
       </Card>
 
-      {/* Tomorrow */}
-      {(videoEnded || true) && (
-        <div className="space-y-3">
-          <p className="text-center text-xs text-muted-foreground">
-            明天，繼續面對未來的自己
-          </p>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={onNewDay}
-          >
-            設定明天的目標
-          </Button>
-        </div>
-      )}
+      {/* Next Day */}
+      <div className="space-y-2.5 pt-1">
+        <p className="text-center text-xs text-muted-foreground/60">
+          明天，繼續面對未來的自己
+        </p>
+        <Button variant="outline" className="w-full border-border/50 hover:border-border" onClick={onNewDay}>
+          設定明天的目標
+        </Button>
+      </div>
     </div>
   );
 }
