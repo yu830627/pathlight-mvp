@@ -31,7 +31,9 @@ export default function ResultView({
   onNewDay: () => void;
 }) {
   const completed = record.completed === true;
-  const videoSrc = completed ? "/videos/success.mp4" : "/videos/regret.mp4";
+  const videoSrc = completed
+    ? "https://1t3glvrash0h45y1.public.blob.vercel-storage.com/videos/success.mp4"
+    : "https://1t3glvrash0h45y1.public.blob.vercel-storage.com/videos/regret.mp4";
   const message = completed
     ? getRandomMessage(SUCCESS_MESSAGES)
     : getRandomMessage(REGRET_MESSAGES);
