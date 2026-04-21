@@ -88,7 +88,7 @@ export async function POST(req: Request) {
   const systemPrompt = SYSTEM_PROMPTS[selfType]?.(name, mainGoal, currentChallenge, memories ?? []);
 
   const result = streamText({
-    model: anthropic("claude-sonnet-4.6"),
+    model: anthropic("claude-sonnet-4-6"),
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
     maxOutputTokens: 200,
