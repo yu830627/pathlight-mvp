@@ -148,7 +148,30 @@ export default function Home() {
         )}
         {view === "dashboard" && activeTab === "explore" && <ComingSoon title="探索" />}
         {view === "dashboard" && activeTab === "roles" && <ComingSoon title="專業角色" />}
-        {view === "dashboard" && activeTab === "account" && <ComingSoon title="帳戶" />}
+        {view === "dashboard" && activeTab === "account" && profile && (
+          <div className="flex min-h-screen flex-col items-center justify-center p-6 pb-28 w-full gap-4" style={{ background: "#EDE0CF" }}>
+            <div className="w-full max-w-sm space-y-3">
+              <p className="text-xs text-stone-400 font-mono tracking-widest uppercase text-center mb-6">帳戶</p>
+              <div className="bg-white rounded-3xl p-5 space-y-1 shadow-sm">
+                <p className="text-sm font-semibold text-stone-700">{profile.name}</p>
+                <p className="text-xs text-stone-400">{profile.mainGoal}</p>
+              </div>
+              <button
+                onClick={() => { localStorage.removeItem("pathlight_today"); setTodayRecord(null); setView("dashboard"); setActiveTab("home"); }}
+                className="w-full py-3 rounded-2xl text-sm font-semibold text-stone-700 bg-white shadow-sm border border-stone-200"
+              >
+                重置今日記錄
+              </button>
+              <button
+                onClick={() => { localStorage.removeItem("pathlight_profile"); localStorage.removeItem("pathlight_today"); setProfile(null); setTodayRecord(null); setView("onboarding"); }}
+                className="w-full py-3 rounded-2xl text-sm font-semibold text-white shadow-sm"
+                style={{ backgroundColor: "#6B3A2A" }}
+              >
+                重新設定個人資料
+              </button>
+            </div>
+          </div>
+        )}
 
         {view === "checkin" && profile && todayRecord && (
           <div className="flex min-h-screen flex-col items-center justify-center p-4 w-full pb-28">
