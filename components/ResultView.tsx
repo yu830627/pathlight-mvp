@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { UserProfile, DailyRecord } from "@/app/page";
@@ -62,10 +62,11 @@ export default function ResultView({
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
 
-  const handlePlay = () => {
-    videoRef.current?.play();
-    setVideoPlaying(true);
-  };
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.play().then(() => setVideoPlaying(true)).catch(() => {});
+  }, [videoSrc]);
 
   const selfLabel = record.selfType === "realistic" ? "現實版" : record.selfType === "regret" ? "後悔版" : "成功版";
 
@@ -89,6 +90,7 @@ export default function ResultView({
           src={videoSrc}
           className="w-full h-full object-cover"
           playsInline
+          autoPlay
           onEnded={() => setVideoEnded(true)}
           onPlay={() => setVideoPlaying(true)}
         />
