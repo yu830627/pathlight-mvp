@@ -196,7 +196,11 @@ export default function DashboardView({
                 const updated = loadEntries(activeCard.id);
                 setCardEntries(updated);
                 setSavedFeedback(true);
-                setTimeout(() => setSavedFeedback(false), 2000);
+                setTimeout(() => {
+                  setOpenCard(null);
+                  setCardText("");
+                  setSavedFeedback(false);
+                }, 800);
               }}
               className="w-full py-3 rounded-2xl font-semibold text-white text-sm active:scale-95 transition-transform"
               style={{ backgroundColor: savedFeedback ? "#4A9B6F" : activeCard.bg }}
