@@ -82,7 +82,7 @@ export default function ResultView({
       </div>
 
       {/* Video Player */}
-      <div className={`relative rounded-2xl overflow-hidden border ${accent.border} bg-black aspect-video shadow-lg`}>
+      <div className={`relative rounded-2xl overflow-hidden border ${accent.border} bg-black shadow-lg`} style={{ aspectRatio: "9/16", maxHeight: "70vh" }}>
         <video
           ref={videoRef}
           src={videoSrc}
