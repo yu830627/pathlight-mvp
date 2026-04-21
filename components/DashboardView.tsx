@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { UserProfile } from "@/app/page";
+import VoiceMemo from "@/components/VoiceMemo";
 
 type SelfType = "success" | "realistic" | "regret";
 
@@ -188,7 +189,6 @@ export default function DashboardView({
               onClick={() => {
                 if (!cardText.trim()) return;
                 saveEntry(activeCard.id, cardText.trim());
-                if (activeCard.id === "goal") onGoalSet(cardText.trim());
                 const updated = loadEntries(activeCard.id);
                 setCardEntries(updated);
               }}
@@ -286,6 +286,11 @@ export default function DashboardView({
             />
           ))}
         </div>
+      </div>
+
+      {/* Voice Memo */}
+      <div className="px-5">
+        <VoiceMemo />
       </div>
 
       {/* Mood Slider */}

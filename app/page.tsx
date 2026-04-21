@@ -6,6 +6,8 @@ import DashboardView from "@/components/DashboardView";
 import CheckInView from "@/components/CheckInView";
 import ResultView from "@/components/ResultView";
 import FutureSelfChat from "@/components/FutureSelfChat";
+import ExploreView from "@/components/ExploreView";
+import ProfessionalRolesView from "@/components/ProfessionalRolesView";
 import BottomNav, { type Tab } from "@/components/BottomNav";
 
 export type UserProfile = {
@@ -18,6 +20,7 @@ export type DailyRecord = {
   date: string;
   goal: string;
   completed: boolean | null;
+  selfType?: "success" | "realistic" | "regret";
 };
 
 type View = "onboarding" | "dashboard" | "chat" | "checkin" | "result";
@@ -25,16 +28,6 @@ type SelfType = "success" | "realistic" | "regret";
 
 function getTodayString() {
   return new Date().toISOString().split("T")[0];
-}
-
-function ComingSoon({ title }: { title: string }) {
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-3 pb-24" style={{ background: "#EDE0CF" }}>
-      <p className="text-4xl">🚧</p>
-      <p className="text-lg font-semibold text-stone-700">{title}</p>
-      <p className="text-sm text-stone-400">即將推出</p>
-    </div>
-  );
 }
 
 export default function Home() {
@@ -90,11 +83,12 @@ export default function Home() {
     setView("checkin");
   };
 
-  const handleChatResult = (completed: boolean) => {
+  const handleChatResult = (completed: boolean, selfType: SelfType) => {
     const record: DailyRecord = {
       date: getTodayString(),
       goal: "今天的目標",
       completed,
+      selfType,
     };
     localStorage.setItem("pathlight_today", JSON.stringify(record));
     setTodayRecord(record);
@@ -146,8 +140,8 @@ export default function Home() {
         {view === "dashboard" && activeTab === "home" && profile && (
           <DashboardView profile={profile} onGoalSet={handleGoalSet} onOpenChat={handleOpenChat} />
         )}
-        {view === "dashboard" && activeTab === "explore" && <ComingSoon title="探索" />}
-        {view === "dashboard" && activeTab === "roles" && <ComingSoon title="專業角色" />}
+        {view === "dashboard" && activeTab === "explore" && <ExploreView />}
+        {view === "dashboard" && activeTab === "roles" && <ProfessionalRolesView />}
         {view === "dashboard" && activeTab === "account" && profile && (
           <div className="flex min-h-screen flex-col items-center justify-center p-6 pb-28 w-full gap-4" style={{ background: "#EDE0CF" }}>
             <div className="w-full max-w-sm space-y-3">

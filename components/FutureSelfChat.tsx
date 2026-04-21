@@ -7,6 +7,28 @@ import type { UserProfile } from "@/app/page";
 
 type SelfType = "success" | "realistic" | "regret";
 
+export type MemoryEntry = {
+  date: string;
+  selfType: SelfType;
+  userMessages: string[];
+  completed: boolean | null;
+};
+
+export function loadMemories(): MemoryEntry[] {
+  try {
+    const raw = localStorage.getItem("pathlight_memories");
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+export function saveMemory(entry: MemoryEntry) {
+  const memories = loadMemories();
+  const idx = memories.findIndex((m) => m.date === entry.date && m.selfType === entry.selfType);
+  if (idx >= 0) memories[idx] = entry;
+  else memories.unshift(entry);
+  localStorage.setItem("pathlight_memories", JSON.stringify(memories.slice(0, 10)));
+}
+
 const SELF_CONFIG = {
   success: {
     label: "成功版",
@@ -46,11 +68,14 @@ export default function FutureSelfChat({
   profile: UserProfile;
   selfType: SelfType;
   onBack: () => void;
-  onResult: (completed: boolean) => void;
+  onResult: (completed: boolean, selfType: SelfType) => void;
 }) {
   const config = SELF_CONFIG[selfType];
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
+  const userMessagesRef = useRef<string[]>([]);
+
+  const memories = loadMemories().slice(0, 5);
 
   const openingMessages = [
     {
@@ -60,7 +85,10 @@ export default function FutureSelfChat({
     },
   ];
 
+  const [apiError, setApiError] = useState<string | null>(null);
+
   const { messages, sendMessage, status } = useChat({
+    onError: (err) => setApiError(err.message || "AI 回覆失敗，請檢查網路或稍後再試"),
     transport: new DefaultChatTransport({
       api: "/api/chat",
       body: {
@@ -68,6 +96,7 @@ export default function FutureSelfChat({
         name: profile.name,
         mainGoal: profile.mainGoal,
         currentChallenge: profile.currentChallenge,
+        memories,
       },
     }),
   });
@@ -78,8 +107,20 @@ export default function FutureSelfChat({
 
   const handleSend = () => {
     if (!input.trim() || status !== "ready") return;
+    userMessagesRef.current.push(input.trim());
     sendMessage({ text: input.trim() });
     setInput("");
+  };
+
+  const handleResult = (completed: boolean) => {
+    const today = new Date().toISOString().split("T")[0];
+    saveMemory({
+      date: today,
+      selfType,
+      userMessages: userMessagesRef.current.slice(-3),
+      completed,
+    });
+    onResult(completed, selfType);
   };
 
   return (
@@ -92,9 +133,7 @@ export default function FutureSelfChat({
         className="flex items-center gap-3 px-5 pt-12 pb-4 border-b"
         style={{ borderColor: "rgba(0,0,0,0.08)", background: "#EDE0CF" }}
       >
-        <button onClick={onBack} className="text-stone-500 hover:text-stone-800 transition-colors">
-          ←
-        </button>
+        <button onClick={onBack} style={{ color: "#555" }}>←</button>
         <div className="flex items-center gap-2">
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
@@ -103,12 +142,17 @@ export default function FutureSelfChat({
             未
           </div>
           <div>
-            <p className="text-sm font-semibold text-stone-800">
+            <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>
               {config.label}的你
             </p>
-            <p className="text-xs text-stone-400">{config.labelEn}</p>
+            <p className="text-xs" style={{ color: "#888" }}>{config.labelEn}</p>
           </div>
         </div>
+        {memories.length > 0 && (
+          <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.06)", color: "#666" }}>
+            記憶 {memories.length}
+          </span>
+        )}
       </div>
 
       {/* Messages */}
@@ -122,10 +166,7 @@ export default function FutureSelfChat({
           const isUser = msg.role === "user";
 
           return (
-            <div
-              key={msg.id}
-              className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-            >
+            <div key={msg.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
               {!isUser && (
                 <div
                   className="w-7 h-7 rounded-full flex-none flex items-center justify-center text-xs font-bold text-white mr-2 mt-1"
@@ -163,6 +204,11 @@ export default function FutureSelfChat({
             </div>
           </div>
         )}
+        {apiError && (
+          <div className="mx-2 px-4 py-3 rounded-2xl text-sm text-red-700 bg-red-50 border border-red-200">
+            ⚠️ {apiError}
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -171,17 +217,17 @@ export default function FutureSelfChat({
         className="px-4 py-3 border-t space-y-2"
         style={{ borderColor: "rgba(0,0,0,0.08)", background: "#EDE0CF" }}
       >
-        <p className="text-xs text-center text-stone-400">今天，你做到了嗎？</p>
+        <p className="text-xs text-center" style={{ color: "#888" }}>今天，你做到了嗎？</p>
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => onResult(true)}
+            onClick={() => handleResult(true)}
             className="py-3 rounded-2xl text-sm font-semibold text-white transition-transform active:scale-95"
             style={{ backgroundColor: "#C4861A" }}
           >
             做到了！
           </button>
           <button
-            onClick={() => onResult(false)}
+            onClick={() => handleResult(false)}
             className="py-3 rounded-2xl text-sm font-semibold transition-transform active:scale-95"
             style={{ background: "#fff", color: "#6B5B3E", border: "1px solid rgba(0,0,0,0.12)" }}
           >
@@ -191,13 +237,10 @@ export default function FutureSelfChat({
       </div>
 
       {/* Input */}
-      <div
-        className="px-4 pb-6 pt-2 flex gap-2"
-        style={{ background: "#EDE0CF" }}
-      >
+      <div className="px-4 pb-6 pt-2 flex gap-2" style={{ background: "#EDE0CF" }}>
         <input
           className="flex-1 rounded-2xl px-4 py-3 text-sm bg-white border focus:outline-none"
-          style={{ borderColor: "rgba(0,0,0,0.1)" }}
+          style={{ borderColor: "rgba(0,0,0,0.1)", color: "#1a1a1a" }}
           placeholder="跟未來的你說話..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
