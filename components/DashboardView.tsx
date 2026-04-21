@@ -82,6 +82,13 @@ export default function DashboardView({
   const [aiMessages, setAiMessages] = useState<AiMessages>({});
   const [openCard, setOpenCard] = useState<string | null>(null);
   const [cardText, setCardText] = useState("");
+  const [mood, setMood] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("pathlight_mood");
+      return saved ? parseInt(saved) : 3;
+    }
+    return 3;
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const handleScroll = () => {
@@ -200,6 +207,40 @@ export default function DashboardView({
               }`}
             />
           ))}
+        </div>
+      </div>
+
+      {/* Mood Slider */}
+      <div className="px-5">
+        <div className="bg-white rounded-3xl px-5 py-4 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-stone-700">今天的心情</p>
+            <p className="text-xs text-stone-400">
+              {["😢 很低落", "😕 有點差", "😐 還好", "🙂 不錯", "😊 很棒！"][mood - 1]}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xl">😢</span>
+            <div className="relative flex-1 h-8 flex items-center">
+              <div className="absolute w-full h-2 rounded-full" style={{
+                background: "linear-gradient(to right, #93C5FD, #6EE7B7, #FCD34D, #FCA5A5, #F97316)"
+              }} />
+              <input
+                type="range"
+                min={1}
+                max={5}
+                value={mood}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  setMood(val);
+                  localStorage.setItem("pathlight_mood", String(val));
+                }}
+                className="relative w-full h-2 appearance-none bg-transparent cursor-pointer"
+                style={{ WebkitAppearance: "none" }}
+              />
+            </div>
+            <span className="text-xl">😊</span>
+          </div>
         </div>
       </div>
 
