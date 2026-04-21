@@ -78,7 +78,7 @@ export default function ExploreView() {
   });
 
   return (
-    <div className="w-full max-w-xl min-h-screen pb-24" style={{ background: "#EDE0CF" }}>
+    <div className="w-full max-w-xl min-h-screen pb-32" style={{ background: "#EDE0CF" }}>
       <div className="px-5 pt-14 pb-4">
         <p className="text-xs text-stone-400 font-mono tracking-widest uppercase">探索</p>
         <h1 className="text-xl font-semibold text-stone-700 mt-0.5">發現更多</h1>
@@ -105,7 +105,7 @@ export default function ExploreView() {
       <div className="px-5 space-y-4">
         {/* AI Calendar */}
         {activeSection === "calendar" && (
-          <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-sm">
             <div className="px-5 pt-4 pb-2">
               <p className="text-sm font-semibold text-stone-700">本週 AI 鼓勵日曆</p>
               <p className="text-xs text-stone-400 mt-0.5">每天一句話，來自未來的你</p>
