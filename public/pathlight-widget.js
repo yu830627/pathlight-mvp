@@ -11,15 +11,29 @@
 
 // ── 個人設定 ─────────────────────────────
 const NAME = "你的名字"   // ← 改成你的名字
-const PHOTO_URL = ""      // ← 貼上你的照片網址（Imgur 等公開圖片）
 const APP_URL = "https://pathlight-mvp-ffo2.vercel.app"
 // ─────────────────────────────────────────
+
+const BLOB = "https://1t3glvrash0h45y1.public.blob.vercel-storage.com"
+
+// 快取圖片（避免每次重載）
+const imageCache = {}
+async function getCachedImage(url) {
+  if (imageCache[url]) return imageCache[url]
+  try {
+    const req = new Request(url)
+    const img = await req.loadImage()
+    imageCache[url] = img
+    return img
+  } catch (e) { return null }
+}
 
 const VERSIONS = {
   success: {
     label: "成功版",
     accentColor: new Color("#C4861A"),
     borderColor: new Color("#E8C97A"),
+    photoUrl: `${BLOB}/success-banner-v2.png`,
     quotes: [
       { main: "一個人的態度，\n決定他的高度。", sub: "調整心態重新出發，你的韌性是你最強大的力量！" },
       { main: "每一個做到，\n都在縮短距離。", sub: "你今天的行動，就是成功版未來的基石。" },
@@ -31,6 +45,7 @@ const VERSIONS = {
     label: "現實版",
     accentColor: new Color("#0284C7"),
     borderColor: new Color("#7ABFE8"),
+    photoUrl: `${BLOB}/realistic-banner-v2.png`,
     quotes: [
       { main: "今天進步 1%，\n一年後的你\n會比現在強大 37 倍", sub: "願意起步，就已經贏過還在猶豫的自己。" },
       { main: "不完美的行動，\n勝過完美的等待。", sub: "你今天已經在走了，這就是最重要的事。" },
@@ -42,6 +57,7 @@ const VERSIONS = {
     label: "後悔版",
     accentColor: new Color("#DC2626"),
     borderColor: new Color("#F08080"),
+    photoUrl: `${BLOB}/regret-banner-v2.png`,
     quotes: [
       { main: "後悔，\n是最沒用的情緒。", sub: "假如有重新選擇的機會，你會怎樣做？" },
       { main: "我希望你\n比我更勇敢。", sub: "今天，給自己一個不同的選擇。" },
@@ -64,20 +80,10 @@ function getDailyQuote(version) {
   return version.quotes[seed % version.quotes.length]
 }
 
-async function loadPhoto() {
-  if (!PHOTO_URL) return null
-  try {
-    const req = new Request(PHOTO_URL)
-    return await req.loadImage()
-  } catch (e) {
-    return null
-  }
-}
-
 async function buildWidget() {
   const version = getVersion()
   const quote = getDailyQuote(version)
-  const photo = await loadPhoto()
+  const photo = await getCachedImage(version.photoUrl)
 
   const w = new ListWidget()
   w.url = APP_URL
