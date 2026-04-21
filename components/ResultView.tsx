@@ -82,7 +82,8 @@ export default function ResultView({
       </div>
 
       {/* Video Player */}
-      <div className={`relative rounded-2xl overflow-hidden border ${accent.border} bg-black shadow-lg`} style={{ aspectRatio: "9/16", maxHeight: "70vh" }}>
+      <div className="flex justify-center">
+      <div className={`relative rounded-2xl overflow-hidden border ${accent.border} bg-black shadow-lg w-full`} style={{ aspectRatio: "9/16", maxHeight: "70vh", maxWidth: "calc(70vh * 9 / 16)" }}>
         <video
           ref={videoRef}
           src={videoSrc}
@@ -107,6 +108,7 @@ export default function ResultView({
             </span>
           </button>
         )}
+      </div>
       </div>
 
       {/* Message */}
