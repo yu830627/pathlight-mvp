@@ -36,38 +36,73 @@ const FEATURE_CARDS = [
   {
     id: "notebook",
     title: "人生筆記本",
-    desc: "紀錄發生什麼事",
-    icon: "◎",
+    desc: "紀錄今天發生的事",
+    emoji: "📔",
     bg: "#2C3D35",
+    accent: "#4A6B58",
     placeholder: "今天發生了什麼？寫下來...",
   },
   {
     id: "decision",
     title: "決策日記",
-    desc: "今天的大決定？",
-    icon: "◈",
+    desc: "今天做了什麼決定？",
+    emoji: "🗓",
     bg: "#3D5449",
+    accent: "#5C7A68",
     placeholder: "今天你做了什麼決定？為什麼？",
   },
   {
     id: "goal",
     title: "目標追蹤",
-    desc: "好好保持紀錄！",
-    icon: "≡",
+    desc: "今天的目標進展",
+    emoji: "🎯",
     bg: "#6B3A2A",
+    accent: "#8C5240",
     placeholder: "今天的目標進展如何？",
   },
   {
     id: "mood",
     title: "情緒紀錄",
-    desc: "寫下你今天的心情",
-    icon: "◉",
+    desc: "今天心情怎麼樣？",
+    emoji: "💭",
     bg: "#7A5C22",
+    accent: "#9C7A38",
     placeholder: "今天的心情是？發生了什麼讓你有這種感受？",
   },
 ];
 
 type AiMessages = Partial<Record<"success" | "realistic" | "regret", { quote: string; sub: string }>>;
+type CardEntry = { date: string; text: string };
+
+function getTodayString() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+function loadEntries(cardId: string): CardEntry[] {
+  try {
+    const raw = localStorage.getItem(`pathlight_card_${cardId}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveEntry(cardId: string, text: string) {
+  const entries = loadEntries(cardId);
+  const today = getTodayString();
+  const existing = entries.findIndex((e) => e.date === today);
+  if (existing >= 0) {
+    entries[existing].text = text;
+  } else {
+    entries.unshift({ date: today, text });
+  }
+  localStorage.setItem(`pathlight_card_${cardId}`, JSON.stringify(entries.slice(0, 30)));
+}
 
 export default function DashboardView({
   profile,
@@ -82,6 +117,7 @@ export default function DashboardView({
   const [aiMessages, setAiMessages] = useState<AiMessages>({});
   const [openCard, setOpenCard] = useState<string | null>(null);
   const [cardText, setCardText] = useState("");
+  const [cardEntries, setCardEntries] = useState<CardEntry[]>([]);
   const [mood, setMood] = useState<number>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("pathlight_mood");
@@ -106,37 +142,81 @@ export default function DashboardView({
     return ai ?? banner.fallback(profile.name);
   };
 
+  const handleOpenCard = (cardId: string) => {
+    const entries = loadEntries(cardId);
+    const todayEntry = entries.find((e) => e.date === getTodayString());
+    setCardText(todayEntry?.text ?? "");
+    setCardEntries(entries);
+    setOpenCard(cardId);
+  };
+
   const activeCard = FEATURE_CARDS.find((c) => c.id === openCard);
 
   if (openCard && activeCard) {
+    const pastEntries = cardEntries.filter((e) => e.date !== getTodayString());
     return (
       <div className="w-full max-w-xl min-h-screen flex flex-col" style={{ background: "#EDE0CF" }}>
-        <div className="flex items-center gap-3 p-5 pt-12">
-          <button onClick={() => { setOpenCard(null); setCardText(""); }} className="text-sm text-muted-foreground">
-            ← 返回
-          </button>
-          <h2 className="text-lg font-bold" style={{ color: activeCard.bg }}>{activeCard.title}</h2>
-        </div>
-        <div className="flex-1 px-5 space-y-4">
-          <p className="text-sm text-muted-foreground">{activeCard.desc}</p>
-          <textarea
-            className="w-full min-h-[200px] rounded-2xl p-4 text-base resize-none focus:outline-none border border-white/60 bg-white/80"
-            placeholder={activeCard.placeholder}
-            value={cardText}
-            onChange={(e) => setCardText(e.target.value)}
-            autoFocus
-          />
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 pt-12 pb-4" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
           <button
-            onClick={() => {
-              if (activeCard.id === "goal" && cardText.trim()) onGoalSet(cardText.trim());
-              setOpenCard(null);
-              setCardText("");
-            }}
-            className="w-full py-3 rounded-2xl font-semibold text-white text-sm"
-            style={{ backgroundColor: activeCard.bg }}
+            onClick={() => { setOpenCard(null); setCardText(""); }}
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.06)" }}
           >
-            儲存
+            <span className="text-stone-600 text-sm">←</span>
           </button>
+          <span className="text-2xl">{activeCard.emoji}</span>
+          <div>
+            <h2 className="text-base font-bold text-stone-800">{activeCard.title}</h2>
+            <p className="text-xs text-stone-400">{activeCard.desc}</p>
+          </div>
+        </div>
+
+        <div className="flex-1 px-5 py-4 space-y-4 overflow-y-auto pb-8">
+          {/* Today's Entry */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">今天</p>
+            <textarea
+              className="w-full min-h-[160px] rounded-2xl p-4 text-sm resize-none focus:outline-none shadow-sm"
+              style={{ background: "white", border: `2px solid ${activeCard.bg}20` }}
+              placeholder={activeCard.placeholder}
+              value={cardText}
+              onChange={(e) => setCardText(e.target.value)}
+              autoFocus
+            />
+            <button
+              onClick={() => {
+                if (!cardText.trim()) return;
+                saveEntry(activeCard.id, cardText.trim());
+                if (activeCard.id === "goal") onGoalSet(cardText.trim());
+                const updated = loadEntries(activeCard.id);
+                setCardEntries(updated);
+              }}
+              className="w-full py-3 rounded-2xl font-semibold text-white text-sm active:scale-95 transition-transform"
+              style={{ backgroundColor: activeCard.bg }}
+            >
+              儲存
+            </button>
+          </div>
+
+          {/* Past Entries */}
+          {pastEntries.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">過去記錄</p>
+              <div className="space-y-2">
+                {pastEntries.map((entry) => (
+                  <div
+                    key={entry.date}
+                    className="rounded-2xl p-4 space-y-1"
+                    style={{ background: "white" }}
+                  >
+                    <p className="text-xs font-semibold" style={{ color: activeCard.bg }}>{formatDate(entry.date)}</p>
+                    <p className="text-sm text-stone-700 leading-relaxed">{entry.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -172,7 +252,6 @@ export default function DashboardView({
                   className="w-full bg-white rounded-3xl shadow-sm p-5 flex gap-4 items-center text-left active:scale-[0.98] transition-transform duration-150"
                   style={{ minHeight: 140 }}
                 >
-                  {/* Photo */}
                   <div className="flex-none w-28 h-28 rounded-2xl overflow-hidden bg-stone-100">
                     <img
                       src={banner.image}
@@ -180,7 +259,6 @@ export default function DashboardView({
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  {/* Text */}
                   <div className="flex-1 space-y-2">
                     <p className="text-xl font-bold text-stone-800 leading-snug whitespace-pre-line">
                       {content.quote}
@@ -246,35 +324,49 @@ export default function DashboardView({
 
       {/* 4 Feature Cards */}
       <div className="px-5 grid grid-cols-2 gap-3">
-        {FEATURE_CARDS.map((card) => (
-          <button
-            key={card.id}
-            onClick={() => setOpenCard(card.id)}
-            className="rounded-3xl overflow-hidden text-left transition-transform duration-200 active:scale-95"
-            style={{ backgroundColor: card.bg, minHeight: 160 }}
-          >
-            <div className="p-4 space-y-2">
-              {/* Icon + Title */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-sm font-bold">
-                    {card.icon}
+        {FEATURE_CARDS.map((card) => {
+          const entries = loadEntries(card.id);
+          const todayDone = entries.some((e) => e.date === getTodayString());
+          const count = entries.length;
+          return (
+            <button
+              key={card.id}
+              onClick={() => handleOpenCard(card.id)}
+              className="rounded-3xl text-left transition-transform duration-200 active:scale-95 overflow-hidden"
+              style={{ backgroundColor: card.bg, minHeight: 156 }}
+            >
+              <div className="p-4 flex flex-col h-full gap-2">
+                {/* Top row */}
+                <div className="flex items-start justify-between">
+                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl"
+                    style={{ background: "rgba(255,255,255,0.18)" }}>
+                    {card.emoji}
                   </div>
-                  <span className="text-white font-semibold text-sm">{card.title}</span>
+                  {todayDone && (
+                    <div className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
+                        <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                  )}
                 </div>
-                <span className="text-white/60 text-sm">↩</span>
+                {/* Title */}
+                <div className="flex-1">
+                  <p className="text-white font-semibold text-sm leading-tight">{card.title}</p>
+                  <p className="text-white/60 text-xs mt-0.5">{card.desc}</p>
+                </div>
+                {/* Bottom pill */}
+                <div className="flex items-center gap-2">
+                  <div className="rounded-full px-3 py-1" style={{ background: "rgba(255,255,255,0.15)" }}>
+                    <span className="text-white/90 text-xs font-medium">
+                      {count > 0 ? `${count} 則記錄` : "開始紀錄"}
+                    </span>
+                  </div>
+                </div>
               </div>
-              {/* CTA Button */}
-              <div className="inline-block bg-white rounded-full px-3 py-1.5">
-                <span className="text-xs font-semibold" style={{ color: card.bg }}>{card.desc}</span>
-              </div>
-            </div>
-            {/* Bottom decorative area */}
-            <div className="h-16 opacity-20" style={{
-              background: "linear-gradient(to bottom, transparent, rgba(0,0,0,0.3))"
-            }} />
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
