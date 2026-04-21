@@ -264,7 +264,7 @@ export default function DashboardView({
                 <button
                   onClick={() => onOpenChat(banner.type)}
                   className="w-full bg-white rounded-3xl shadow-sm p-5 flex gap-4 items-center text-left active:scale-[0.98] transition-transform duration-150"
-                  style={{ minHeight: 140 }}
+                  style={{ height: 156 }}
                 >
                   <div className="flex-none w-28 h-28 rounded-2xl overflow-hidden bg-stone-100">
                     <img
@@ -273,12 +273,12 @@ export default function DashboardView({
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="flex-1 space-y-2">
-                    <p className="text-xl font-bold text-stone-800 leading-snug whitespace-pre-line">
+                  <div className="flex-1 flex flex-col justify-center gap-1.5 overflow-hidden">
+                    <p className="text-lg font-bold text-stone-800 leading-snug whitespace-pre-line line-clamp-3">
                       {content.quote}
                     </p>
-                    <p className="text-sm text-stone-500 leading-snug">{content.sub}</p>
-                    <p className="text-xs text-stone-400 flex items-center gap-1">
+                    <p className="text-xs text-stone-500 leading-snug line-clamp-2">{content.sub}</p>
+                    <p className="text-xs text-stone-400">
                       點擊與{["成功版", "現實版", "後悔版"][BANNERS.findIndex(b => b.type === banner.type)]}對話 →
                     </p>
                   </div>

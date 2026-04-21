@@ -97,71 +97,67 @@ async function buildWidget() {
 
   // ── 左：照片 ──
   const photoStack = mainRow.addStack()
-  photoStack.size = new Size(100, 100)
-  photoStack.cornerRadius = 16
+  photoStack.size = new Size(110, 110)
+  photoStack.cornerRadius = 18
 
   if (photo) {
     photoStack.backgroundImage = photo
   } else {
-    // 無照片：顯示 gradient 色塊 + 名字縮寫
     photoStack.backgroundColor = version.accentColor
     photoStack.layoutVertically()
     photoStack.centerAlignContent()
     photoStack.addSpacer()
     const init = photoStack.addText(NAME.slice(0, 1))
-    init.font = Font.boldSystemFont(40)
+    init.font = Font.boldSystemFont(44)
     init.textColor = Color.white()
     init.centerAlignText()
     photoStack.addSpacer()
   }
 
-  mainRow.addSpacer(14)
+  mainRow.addSpacer(16)
 
   // ── 右：文字區塊 ──
   const textStack = mainRow.addStack()
   textStack.layoutVertically()
-  textStack.centerAlignContent()
 
   // 版本標籤
   const labelEl = textStack.addText(version.label + "的你")
-  labelEl.font = Font.systemFont(10)
+  labelEl.font = Font.systemFont(11)
   labelEl.textColor = version.accentColor
 
-  textStack.addSpacer(4)
+  textStack.addSpacer(5)
 
   // 主引言（大字）
   const mainEl = textStack.addText(quote.main)
-  mainEl.font = Font.boldSystemFont(17)
+  mainEl.font = Font.boldSystemFont(20)
   mainEl.textColor = new Color("#1A1208")
-  mainEl.minimumScaleFactor = 0.7
+  mainEl.minimumScaleFactor = 0.75
+  mainEl.lineLimit = 4
 
   textStack.addSpacer(6)
 
   // 副標題（小字）
   const subEl = textStack.addText(quote.sub)
-  subEl.font = Font.systemFont(11)
+  subEl.font = Font.systemFont(12)
   subEl.textColor = new Color("#6B5B3E")
-  subEl.minimumScaleFactor = 0.75
+  subEl.minimumScaleFactor = 0.8
+  subEl.lineLimit = 2
 
-  w.addSpacer(10)
+  w.addSpacer(8)
 
   // ── 底部：點擊提示 ──
   const hintRow = w.addStack()
   hintRow.layoutHorizontally()
   hintRow.centerAlignContent()
 
-  const dot = hintRow.addText("● ")
-  dot.font = Font.systemFont(8)
-  dot.textColor = version.accentColor
-
-  const hint = hintRow.addText("點擊與" + version.label + "的你對話")
-  hint.font = Font.systemFont(10)
+  const hint = hintRow.addText("點擊與" + version.label + "的你對話 →")
+  hint.font = Font.systemFont(11)
   hint.textColor = new Color("#9B8B6E")
 
   hintRow.addSpacer()
 
   const brand = hintRow.addText("引路")
-  brand.font = Font.boldSystemFont(10)
+  brand.font = Font.boldSystemFont(11)
   brand.textColor = version.accentColor
 
   return w
