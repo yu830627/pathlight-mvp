@@ -121,6 +121,7 @@ export default function DashboardView({
   const [openCard, setOpenCard] = useState<string | null>(null);
   const [cardText, setCardText] = useState("");
   const [cardEntries, setCardEntries] = useState<CardEntry[]>([]);
+  const [savedFeedback, setSavedFeedback] = useState(false);
   const [mood, setMood] = useState<number>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("pathlight_mood");
@@ -150,6 +151,7 @@ export default function DashboardView({
     const todayEntry = entries.find((e) => e.date === getTodayString());
     setCardText(todayEntry?.text ?? "");
     setCardEntries(entries);
+    setSavedFeedback(false);
     setOpenCard(cardId);
   };
 
@@ -193,11 +195,13 @@ export default function DashboardView({
                 saveEntry(activeCard.id, cardText.trim());
                 const updated = loadEntries(activeCard.id);
                 setCardEntries(updated);
+                setSavedFeedback(true);
+                setTimeout(() => setSavedFeedback(false), 2000);
               }}
               className="w-full py-3 rounded-2xl font-semibold text-white text-sm active:scale-95 transition-transform"
-              style={{ backgroundColor: activeCard.bg }}
+              style={{ backgroundColor: savedFeedback ? "#4A9B6F" : activeCard.bg }}
             >
-              儲存
+              {savedFeedback ? "已儲存 ✓" : "儲存"}
             </button>
           </div>
 

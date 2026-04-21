@@ -16,6 +16,7 @@ export type UserProfile = {
   currentChallenge: string;
   occupation?: string;
   coreValue?: string;
+  photoUrl?: string;
 };
 
 export type DailyRecord = {

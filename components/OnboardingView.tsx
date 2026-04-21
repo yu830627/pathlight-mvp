@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { UserProfile } from "@/app/page";
@@ -26,8 +26,10 @@ export default function OnboardingView({
   const [currentChallenge, setCurrentChallenge] = useState("");
   const [occupation, setOccupation] = useState("");
   const [coreValue, setCoreValue] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   const canNext = () => {
     if (step === 1) return name.trim().length > 0;
@@ -35,7 +37,16 @@ export default function OnboardingView({
     if (step === 3) return currentChallenge.trim().length > 0;
     if (step === 4) return occupation.length > 0;
     if (step === 5) return coreValue.length > 0;
+    if (step === 6) return true; // photo is optional, can skip
     return false;
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setPhotoUrl(ev.target?.result as string);
+    reader.readAsDataURL(file);
   };
 
   const handleNext = () => {
@@ -49,6 +60,7 @@ export default function OnboardingView({
         currentChallenge: currentChallenge.trim(),
         occupation,
         coreValue,
+        photoUrl,
       });
     }
   };
@@ -89,6 +101,7 @@ export default function OnboardingView({
           {step === 3 && <h2 className="text-xl font-semibold leading-snug mt-1">你現在最大的卡關點是什麼？</h2>}
           {step === 4 && <h2 className="text-xl font-semibold leading-snug mt-1">你目前的身份 / 職業？</h2>}
           {step === 5 && <h2 className="text-xl font-semibold leading-snug mt-1">你最核心的價值觀是？</h2>}
+          {step === 6 && <h2 className="text-xl font-semibold leading-snug mt-1">上傳一張你現在的照片</h2>}
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -162,12 +175,48 @@ export default function OnboardingView({
             </div>
           )}
 
+          {step === 6 && (
+            <div className="flex flex-col items-center gap-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-36 h-36 rounded-full overflow-hidden border-2 border-dashed flex items-center justify-center transition-all"
+                style={{ borderColor: photoUrl ? "#C4861A" : "rgba(255,255,255,0.2)", background: photoUrl ? "transparent" : "rgba(255,255,255,0.05)" }}
+              >
+                {photoUrl ? (
+                  <img src={photoUrl} alt="你的照片" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-center space-y-2">
+                    <div className="text-3xl">📷</div>
+                    <p className="text-xs text-muted-foreground">點擊上傳</p>
+                  </div>
+                )}
+              </button>
+              {photoUrl && (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs underline"
+                  style={{ color: "#C4861A" }}
+                >
+                  重新選擇
+                </button>
+              )}
+            </div>
+          )}
+
           <p className="text-xs text-muted-foreground">
             {step === 1 && "未來的你會直接叫你的名字"}
             {step === 2 && "說出你心裡最真實的那個，不必完美"}
             {step === 3 && "未來的你需要知道你現在卡在哪裡"}
             {step === 4 && "幫助 AI 更準確地理解你的處境"}
             {step === 5 && "你最在乎的事，決定你最需要哪種引導"}
+            {step === 6 && "照片只存在這個裝置，未來會用來對比成長"}
           </p>
 
           <Button
@@ -175,7 +224,7 @@ export default function OnboardingView({
             onClick={handleNext}
             disabled={!canNext()}
           >
-            {step === totalSteps ? "開始引路 →" : "繼續 →"}
+            {step === totalSteps ? (photoUrl ? "開始引路 →" : "跳過，直接開始 →") : "繼續 →"}
           </Button>
         </CardContent>
       </Card>
