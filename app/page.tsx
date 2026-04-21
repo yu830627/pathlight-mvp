@@ -318,19 +318,25 @@ function AccountView({ profile, onReset, onFullReset }: {
         {/* 7-day checkin bars */}
         <div>
           <p className="text-xs text-stone-500 mb-2">本週打卡紀錄</p>
-          <div className="flex gap-1.5 items-end justify-between">
-            {stats.checkinMap.map((day) => (
+          <div className="flex gap-2 items-end justify-between">
+            {(stats.checkinMap ?? []).map((day) => (
               <div key={day.date} className="flex flex-col items-center gap-1 flex-1">
                 <div
-                  className="w-full rounded-full transition-all"
+                  className="w-full rounded-lg transition-all"
                   style={{
-                    height: 28,
-                    backgroundColor: day.done ? "#C4861A" : "#EDE0CF",
+                    height: day.done ? 36 : 20,
+                    backgroundColor: day.done ? "#C4861A" : "#D6CFC5",
                   }}
                 />
-                <span className="text-[9px] text-stone-400">{day.label}</span>
+                <span className="text-[9px]" style={{ color: day.done ? "#C4861A" : "#9B8B6E" }}>
+                  {day.label}
+                </span>
               </div>
             ))}
+          </div>
+          <div className="flex justify-between mt-2">
+            <span className="text-[10px] text-stone-400">打卡日：金色長條</span>
+            <span className="text-[10px] text-stone-400">未打卡：灰色短條</span>
           </div>
         </div>
 
