@@ -1,4 +1,8 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { createAnthropic } from "@ai-sdk/anthropic";
+
+const anthropic = createAnthropic({
+  apiKey: (process.env.ANTHROPIC_API_KEY ?? "").trim().replace(/^["']|["']$/g, ""),
+});
 import { convertToModelMessages, streamText, UIMessage } from "ai";
 
 export const maxDuration = 30;
