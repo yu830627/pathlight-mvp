@@ -236,6 +236,12 @@ export default function FutureSelfChat({
             💡 今天還剩 2 次對話。現在最重要的是採取行動！
           </div>
         )}
+        {chatCount >= 6 && !isLimitReached && messages.length >= 6 && (
+          <div className="mx-2 px-4 py-3 rounded-2xl text-xs text-center space-y-1" style={{ background: "#FDF0D5", border: "1px solid #F0C060" }}>
+            <p className="font-semibold text-amber-800">你已深度對話多次</p>
+            <p className="text-amber-700">AI 是放大器，不是逃避的出口。別忘了回到現實採取行動。</p>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 

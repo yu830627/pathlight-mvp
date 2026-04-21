@@ -4,6 +4,96 @@ import { useRef, useState } from "react";
 import type { UserProfile } from "@/app/page";
 import VoiceMemo from "@/components/VoiceMemo";
 
+// ── Mood history helpers ──────────────────────────────────────
+function saveMoodHistory(value: number) {
+  const today = new Date().toISOString().split("T")[0];
+  try {
+    const history = JSON.parse(localStorage.getItem("pathlight_mood_history") || "[]");
+    const idx = history.findIndex((h: { date: string }) => h.date === today);
+    if (idx >= 0) history[idx].value = value;
+    else history.unshift({ date: today, value });
+    localStorage.setItem("pathlight_mood_history", JSON.stringify(history.slice(0, 30)));
+  } catch {}
+}
+
+function loadMoodHistory(): { date: string; value: number }[] {
+  try { return JSON.parse(localStorage.getItem("pathlight_mood_history") || "[]"); }
+  catch { return []; }
+}
+
+// ── 7-day mood chart ─────────────────────────────────────────
+function MoodChart() {
+  const today = new Date();
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - 6 + i);
+    return d.toISOString().split("T")[0];
+  });
+
+  const history = loadMoodHistory();
+  const values = days.map((date) => {
+    const entry = history.find((h) => h.date === date);
+    return entry ? entry.value : null;
+  });
+
+  const labels = days.map((d) => {
+    const dt = new Date(d);
+    return `${dt.getMonth() + 1}/${dt.getDate()}`;
+  });
+
+  const W = 280; const H = 60; const PAD = 12;
+  const xStep = (W - PAD * 2) / 6;
+  const yScale = (v: number) => H - PAD - ((v - 1) / 4) * (H - PAD * 2);
+
+  const points = values
+    .map((v, i) => v !== null ? `${PAD + i * xStep},${yScale(v)}` : null)
+    .filter(Boolean) as string[];
+
+  const polyline = points.length >= 2 ? points.join(" ") : null;
+
+  const EMOJIS = ["😢", "😕", "😐", "🙂", "😊"];
+
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">7 天情緒走勢</p>
+      <div className="bg-white rounded-2xl p-3 shadow-sm">
+        <svg width="100%" viewBox={`0 0 ${W} ${H + 18}`} style={{ overflow: "visible" }}>
+          {/* Grid lines */}
+          {[1, 2, 3, 4, 5].map((v) => (
+            <line key={v} x1={PAD} y1={yScale(v)} x2={W - PAD} y2={yScale(v)}
+              stroke="#F0EAE0" strokeWidth="1" />
+          ))}
+          {/* Line */}
+          {polyline && (
+            <polyline points={polyline} fill="none" stroke="#C4861A" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round" />
+          )}
+          {/* Dots + emoji */}
+          {values.map((v, i) => {
+            if (v === null) return null;
+            const cx = PAD + i * xStep;
+            const cy = yScale(v);
+            return (
+              <g key={i}>
+                <circle cx={cx} cy={cy} r="4" fill="#C4861A" />
+                <text x={cx} y={cy - 8} textAnchor="middle" fontSize="10">{EMOJIS[v - 1]}</text>
+              </g>
+            );
+          })}
+          {/* X labels */}
+          {labels.map((l, i) => (
+            <text key={i} x={PAD + i * xStep} y={H + 14} textAnchor="middle"
+              fontSize="8" fill="#9B8B6E">{l}</text>
+          ))}
+        </svg>
+        {points.length === 0 && (
+          <p className="text-xs text-stone-400 text-center py-1">滑動上方心情滑桿開始記錄</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 type SelfType = "success" | "realistic" | "regret";
 
 const BANNERS = [
@@ -335,6 +425,7 @@ export default function DashboardView({
                   const val = parseInt(e.target.value);
                   setMood(val);
                   localStorage.setItem("pathlight_mood", String(val));
+                  saveMoodHistory(val);
                 }}
                 className="relative w-full h-2 appearance-none bg-transparent cursor-pointer"
                 style={{ WebkitAppearance: "none" }}
@@ -343,6 +434,11 @@ export default function DashboardView({
             <span className="text-xl">😊</span>
           </div>
         </div>
+      </div>
+
+      {/* Mood Chart */}
+      <div className="px-5">
+        <MoodChart />
       </div>
 
       {/* 4 Feature Cards */}

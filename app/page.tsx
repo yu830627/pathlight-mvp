@@ -5,6 +5,7 @@ import OnboardingView from "@/components/OnboardingView";
 import DashboardView from "@/components/DashboardView";
 import CheckInView from "@/components/CheckInView";
 import ResultView from "@/components/ResultView";
+import ActionView from "@/components/ActionView";
 import FutureSelfChat from "@/components/FutureSelfChat";
 import ExploreView from "@/components/ExploreView";
 import ProfessionalRolesView from "@/components/ProfessionalRolesView";
@@ -26,7 +27,7 @@ export type DailyRecord = {
   selfType?: "success" | "realistic" | "regret";
 };
 
-type View = "onboarding" | "dashboard" | "chat" | "checkin" | "result";
+type View = "onboarding" | "dashboard" | "chat" | "checkin" | "action" | "result";
 type SelfType = "success" | "realistic" | "regret";
 
 function getTodayString() {
@@ -78,6 +79,7 @@ export function getWeeklyStats() {
 
   const memories = JSON.parse(localStorage.getItem("pathlight_memories") || "[]");
   const voiceMemos = JSON.parse(localStorage.getItem("pathlight_voice_memos") || "[]");
+  const moodHistory: { date: string; value: number }[] = JSON.parse(localStorage.getItem("pathlight_mood_history") || "[]");
   const history = loadCheckinHistory();
 
   const chats = memories.filter((m: { date: string }) => m.date >= weekAgoStr).length;
@@ -85,7 +87,20 @@ export function getWeeklyStats() {
   const checkins = history.filter((d: string) => d >= weekAgoStr).length;
   const streak = calcStreak(history);
 
-  return { chats, voice, checkins, streak };
+  const recentMoods = moodHistory.filter((m) => m.date >= weekAgoStr);
+  const moodAvg = recentMoods.length > 0
+    ? Math.round(recentMoods.reduce((s, m) => s + m.value, 0) / recentMoods.length * 10) / 10
+    : null;
+
+  // 7-day checkin map
+  const checkinMap = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - 6 + i);
+    const ds = d.toISOString().split("T")[0];
+    return { date: ds, label: `${d.getMonth() + 1}/${d.getDate()}`, done: history.includes(ds) };
+  });
+
+  return { chats, voice, checkins, streak, moodAvg, checkinMap };
 }
 
 export default function Home() {
@@ -95,8 +110,26 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [chatSelfType, setChatSelfType] = useState<SelfType>("success");
   const [streak, setStreak] = useState(0);
+  const [pendingCompleted, setPendingCompleted] = useState<boolean>(false);
 
   useEffect(() => {
+    // 每日推播提醒
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+    // 若今天未打卡且現在 >= 晚上8點，顯示提醒通知
+    if ("Notification" in window && Notification.permission === "granted") {
+      const now = new Date();
+      const history: string[] = JSON.parse(localStorage.getItem("pathlight_checkin_history") || "[]");
+      const today = getTodayString();
+      if (!history.includes(today) && now.getHours() >= 20) {
+        new Notification("引路 Pathlight", {
+          body: "今天還沒有和未來的你對話，現在來打卡吧 ✦",
+          icon: "/icon.svg",
+        });
+      }
+    }
+
     const savedProfile = localStorage.getItem("pathlight_profile");
     const savedRecord = localStorage.getItem("pathlight_today");
 
@@ -142,6 +175,11 @@ export default function Home() {
     localStorage.setItem("pathlight_today", JSON.stringify(record));
     setTodayRecord(record);
     if (completed) { recordCheckin(today); setStreak(calcStreak(loadCheckinHistory())); }
+    setPendingCompleted(completed);
+    setView("action");
+  };
+
+  const handleActionContinue = () => {
     setView("result");
   };
 
@@ -161,7 +199,7 @@ export default function Home() {
     setView("dashboard");
   };
 
-  const showBottomNav = view !== "onboarding" && view !== "chat" && view !== null;
+  const showBottomNav = view !== "onboarding" && view !== "chat" && view !== "action" && view !== null;
 
   if (view === null) {
     return (
@@ -200,6 +238,10 @@ export default function Home() {
             onReset={() => { localStorage.removeItem("pathlight_today"); setTodayRecord(null); setView("dashboard"); setActiveTab("home"); }}
             onFullReset={() => { ["pathlight_profile","pathlight_today","pathlight_memories","pathlight_voice_memos","pathlight_checkin_history","pathlight_mood"].forEach(k => localStorage.removeItem(k)); setProfile(null); setTodayRecord(null); setStreak(0); setView("onboarding"); }}
           />
+        )}
+
+        {view === "action" && (
+          <ActionView completed={pendingCompleted} onContinue={handleActionContinue} />
         )}
 
         {view === "checkin" && profile && todayRecord && (
@@ -256,8 +298,8 @@ function AccountView({ profile, onReset, onFullReset }: {
       </div>
 
       {/* Weekly stats */}
-      <div className="bg-white rounded-3xl p-5 shadow-sm">
-        <p className="text-sm font-semibold text-stone-700 mb-3">本週使用統計</p>
+      <div className="bg-white rounded-3xl p-5 shadow-sm space-y-4">
+        <p className="text-sm font-semibold text-stone-700">本週使用統計</p>
         <div className="grid grid-cols-2 gap-3">
           {statItems.map((s) => (
             <div key={s.label} className="rounded-2xl p-3 text-center" style={{ background: "#F5F0E8" }}>
@@ -265,9 +307,35 @@ function AccountView({ profile, onReset, onFullReset }: {
               <p className="text-xs text-stone-400 mt-0.5">{s.label}</p>
             </div>
           ))}
+          {stats.moodAvg !== null && (
+            <div className="rounded-2xl p-3 text-center" style={{ background: "#F5F0E8" }}>
+              <p className="text-2xl font-bold text-stone-800">{stats.moodAvg}<span className="text-sm font-normal text-stone-500 ml-0.5">分</span></p>
+              <p className="text-xs text-stone-400 mt-0.5">平均心情</p>
+            </div>
+          )}
         </div>
+
+        {/* 7-day checkin bars */}
+        <div>
+          <p className="text-xs text-stone-500 mb-2">本週打卡紀錄</p>
+          <div className="flex gap-1.5 items-end justify-between">
+            {stats.checkinMap.map((day) => (
+              <div key={day.date} className="flex flex-col items-center gap-1 flex-1">
+                <div
+                  className="w-full rounded-full transition-all"
+                  style={{
+                    height: 28,
+                    backgroundColor: day.done ? "#C4861A" : "#EDE0CF",
+                  }}
+                />
+                <span className="text-[9px] text-stone-400">{day.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {stats.streak >= 3 && (
-          <p className="text-xs text-center text-amber-600 mt-3 font-medium">
+          <p className="text-xs text-center text-amber-600 font-medium">
             🔥 已連續打卡 {stats.streak} 天，繼續保持！
           </p>
         )}
