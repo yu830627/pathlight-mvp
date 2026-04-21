@@ -9,197 +9,163 @@
 // ║      即可上下滑切換三種版本            ║
 // ╚══════════════════════════════════════╝
 
-// ── 個人設定（必填）──────────────────────
+// ── 個人設定 ─────────────────────────────
 const NAME = "你的名字"   // ← 改成你的名字
-const GOAL = "你的目標"   // ← 改成你的目標
+const PHOTO_URL = ""      // ← 貼上你的照片網址（Imgur 等公開圖片）
 const APP_URL = "https://pathlight-mvp-ffo2.vercel.app"
-const PHOTO_URL = ""      // ← 貼上你的照片網址（留空則顯示名字縮寫）
 // ─────────────────────────────────────────
 
 const VERSIONS = {
   success: {
     label: "成功版",
-    labelEn: "Aspiration Self",
-    accent: new Color("#D97706"),
-    accentHex: "#D97706",
-    bgTop: new Color("#1A1A08"),
-    bgBot: new Color("#1A2035"),
-    icon: "✦",
+    accentColor: new Color("#C4861A"),
+    borderColor: new Color("#E8C97A"),
     quotes: [
-      `${NAME}，你今天做到了。\n這就是未來的你被建造的方式 — 一天一塊磚。`,
-      `${NAME}，每一個做到，\n都在縮短你和成功版未來的距離。`,
-      `${NAME}，一個人的態度，\n決定他的高度。你的韌性是你最強大的力量。`,
-      `${NAME}，你以為這是小事。\n但從這裡回頭看，這一天是關鍵的。`,
+      { main: "一個人的態度，\n決定他的高度。", sub: "調整心態重新出發，你的韌性是你最強大的力量！" },
+      { main: "每一個做到，\n都在縮短距離。", sub: "你今天的行動，就是成功版未來的基石。" },
+      { main: "你以為這是小事，\n但這一天是關鍵的。", sub: "從未來回頭看，今天你做的決定改變了一切。" },
+      { main: "態度決定高度，\n你的每一步都在建造未來。", sub: "堅持下去，成功版的你在等著你。" },
     ],
   },
   realistic: {
     label: "現實版",
-    labelEn: "Realistic Self",
-    accent: new Color("#0284C7"),
-    accentHex: "#0284C7",
-    bgTop: new Color("#081828"),
-    bgBot: new Color("#0A1A30"),
-    icon: "◈",
+    accentColor: new Color("#0284C7"),
+    borderColor: new Color("#7ABFE8"),
     quotes: [
-      `${NAME}，不完美的行動，\n勝過完美的等待。你今天已經在走了。`,
-      `${NAME}，今天進步 1%，\n一年後的你比現在強大 37 倍。`,
-      `${NAME}，你願意誠實面對自己，\n這本身就是進步。明天，再往前一步。`,
-      `${NAME}，願意起步，\n就已經贏過還在猶豫的自己。`,
+      { main: "今天進步 1%，\n一年後的你\n會比現在強大 37 倍", sub: "願意起步，就已經贏過還在猶豫的自己。" },
+      { main: "不完美的行動，\n勝過完美的等待。", sub: "你今天已經在走了，這就是最重要的事。" },
+      { main: "你願意誠實\n面對自己，\n這本身就是進步。", sub: "明天，再往前一步。繼續。" },
+      { main: "每一天的累積，\n都是最好版本\n在成形。", sub: "現實版的你，比你想像的更有力量。" },
     ],
   },
   regret: {
     label: "後悔版",
-    labelEn: "Regret Self",
-    accent: new Color("#DC2626"),
-    accentHex: "#DC2626",
-    bgTop: new Color("#1A0808"),
-    bgBot: new Color("#200A0A"),
-    icon: "◇",
+    accentColor: new Color("#DC2626"),
+    borderColor: new Color("#F08080"),
     quotes: [
-      `${NAME}，後悔版的我，\n就是從這些「算了」慢慢累積出來的。`,
-      `${NAME}，你還有機會改變這條路。\n現在開始比任何時候都不晚。`,
-      `${NAME}，我希望你比我更勇敢。\n今天，給自己一個不同的選擇。`,
-      `${NAME}，後悔是最沒用的情緒。\n現在改變，就是最好的時機。`,
+      { main: "後悔，\n是最沒用的情緒。", sub: "假如有重新選擇的機會，你會怎樣做？" },
+      { main: "我希望你\n比我更勇敢。", sub: "今天，給自己一個不同的選擇。" },
+      { main: "後悔版的我，\n就是從這些「算了」\n慢慢累積出來的。", sub: "你還有機會改變這條路。" },
+      { main: "現在開始，\n就是最好的時機。", sub: "別讓今天的你，成為明天後悔的原因。" },
     ],
   },
 }
 
-// 取得要顯示的版本
 function getVersion() {
-  // widget parameter 設定：success / realistic / regret
   const param = args.widgetParameter?.trim().toLowerCase()
   if (param && VERSIONS[param]) return VERSIONS[param]
-  // 未設定時依星期自動輪換
   const dayIdx = new Date().getDay() % 3
   return Object.values(VERSIONS)[dayIdx]
 }
 
-// 取得今日語錄（依日期固定，不每次重整都變）
 function getDailyQuote(version) {
   const today = new Date()
   const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate()
   return version.quotes[seed % version.quotes.length]
 }
 
-// 建立 widget
-async function buildWidget(size) {
+async function loadPhoto() {
+  if (!PHOTO_URL) return null
+  try {
+    const req = new Request(PHOTO_URL)
+    return await req.loadImage()
+  } catch (e) {
+    return null
+  }
+}
+
+async function buildWidget() {
   const version = getVersion()
   const quote = getDailyQuote(version)
+  const photo = await loadPhoto()
 
   const w = new ListWidget()
   w.url = APP_URL
-
-  // 背景漸層
-  const grad = new LinearGradient()
-  grad.colors = [version.bgTop, version.bgBot]
-  grad.locations = [0.0, 1.0]
-  w.backgroundGradient = grad
+  w.backgroundColor = new Color("#EDE0CF")
   w.setPadding(14, 14, 14, 14)
 
-  // ── 頂部：版本標籤 + App 名稱 ──
-  const topRow = w.addStack()
-  topRow.layoutHorizontally()
-  topRow.centerAlignContent()
+  // ── 主體：左右排列 ──
+  const mainRow = w.addStack()
+  mainRow.layoutHorizontally()
+  mainRow.centerAlignContent()
 
-  const pill = topRow.addStack()
-  pill.layoutHorizontally()
-  pill.centerAlignContent()
-  pill.backgroundColor = new Color(version.accentHex + "33")
-  pill.cornerRadius = 10
-  pill.setPadding(3, 8, 3, 8)
-  const pillDot = pill.addText(version.icon + " " + version.label)
-  pillDot.font = Font.boldSystemFont(10)
-  pillDot.textColor = version.accent
+  // ── 左：照片 ──
+  const photoStack = mainRow.addStack()
+  photoStack.size = new Size(100, 100)
+  photoStack.cornerRadius = 16
 
-  topRow.addSpacer()
+  if (photo) {
+    photoStack.backgroundImage = photo
+  } else {
+    // 無照片：顯示 gradient 色塊 + 名字縮寫
+    photoStack.backgroundColor = version.accentColor
+    photoStack.layoutVertically()
+    photoStack.centerAlignContent()
+    photoStack.addSpacer()
+    const init = photoStack.addText(NAME.slice(0, 1))
+    init.font = Font.boldSystemFont(40)
+    init.textColor = Color.white()
+    init.centerAlignText()
+    photoStack.addSpacer()
+  }
 
-  const brand = topRow.addText("引路")
-  brand.font = Font.boldSystemFont(12)
-  brand.textColor = new Color("#C4861A")
+  mainRow.addSpacer(14)
+
+  // ── 右：文字區塊 ──
+  const textStack = mainRow.addStack()
+  textStack.layoutVertically()
+  textStack.centerAlignContent()
+
+  // 版本標籤
+  const labelEl = textStack.addText(version.label + "的你")
+  labelEl.font = Font.systemFont(10)
+  labelEl.textColor = version.accentColor
+
+  textStack.addSpacer(4)
+
+  // 主引言（大字）
+  const mainEl = textStack.addText(quote.main)
+  mainEl.font = Font.boldSystemFont(17)
+  mainEl.textColor = new Color("#1A1208")
+  mainEl.minimumScaleFactor = 0.7
+
+  textStack.addSpacer(6)
+
+  // 副標題（小字）
+  const subEl = textStack.addText(quote.sub)
+  subEl.font = Font.systemFont(11)
+  subEl.textColor = new Color("#6B5B3E")
+  subEl.minimumScaleFactor = 0.75
 
   w.addSpacer(10)
 
-  // ── 照片頭像 ──
-  const avatarRow = w.addStack()
-  avatarRow.layoutHorizontally()
-  avatarRow.centerAlignContent()
+  // ── 底部：點擊提示 ──
+  const hintRow = w.addStack()
+  hintRow.layoutHorizontally()
+  hintRow.centerAlignContent()
 
-  if (PHOTO_URL) {
-    try {
-      const req = new Request(PHOTO_URL)
-      const img = await req.loadImage()
-      const avatarStack = avatarRow.addStack()
-      avatarStack.size = new Size(44, 44)
-      avatarStack.cornerRadius = 22
-      avatarStack.backgroundImage = img
-    } catch (e) {
-      // 載入失敗則顯示縮寫
-      const avatarStack = avatarRow.addStack()
-      avatarStack.size = new Size(44, 44)
-      avatarStack.cornerRadius = 22
-      avatarStack.backgroundColor = new Color(version.accentHex + "44")
-      avatarStack.centerAlignContent()
-      avatarStack.layoutHorizontally()
-      avatarStack.addSpacer()
-      const initText = avatarStack.addText(NAME.slice(0, 1))
-      initText.font = Font.boldSystemFont(18)
-      initText.textColor = version.accent
-      avatarStack.addSpacer()
-    }
-  } else {
-    const avatarStack = avatarRow.addStack()
-    avatarStack.size = new Size(44, 44)
-    avatarStack.cornerRadius = 22
-    avatarStack.backgroundColor = new Color(version.accentHex + "44")
-    avatarStack.centerAlignContent()
-    avatarStack.layoutHorizontally()
-    avatarStack.addSpacer()
-    const initText = avatarStack.addText(NAME.slice(0, 1))
-    initText.font = Font.boldSystemFont(18)
-    initText.textColor = version.accent
-    avatarStack.addSpacer()
-  }
+  const dot = hintRow.addText("● ")
+  dot.font = Font.systemFont(8)
+  dot.textColor = version.accentColor
 
-  avatarRow.addSpacer(10)
+  const hint = hintRow.addText("點擊與" + version.label + "的你對話")
+  hint.font = Font.systemFont(10)
+  hint.textColor = new Color("#9B8B6E")
 
-  const nameLabel = avatarRow.addText(NAME)
-  nameLabel.font = Font.boldSystemFont(14)
-  nameLabel.textColor = Color.white()
+  hintRow.addSpacer()
 
-  w.addSpacer(8)
-
-  // ── 語錄 ──
-  const quoteEl = w.addText(quote)
-  quoteEl.font = Font.systemFont(size === "small" ? 12 : 14)
-  quoteEl.textColor = Color.white()
-  quoteEl.minimumScaleFactor = 0.75
-
-  w.addSpacer()
-
-  // ── 底部：目標 + 提示 ──
-  if (GOAL && GOAL !== "你的目標") {
-    const goalEl = w.addText("🎯 " + GOAL)
-    goalEl.font = Font.systemFont(9)
-    goalEl.textColor = new Color("#AAAAAA")
-    goalEl.lineLimit = 1
-    w.addSpacer(4)
-  }
-
-  const hint = w.addText("點擊與" + version.label + "的你對話 →")
-  hint.font = Font.systemFont(9)
-  hint.textColor = version.accent
+  const brand = hintRow.addText("引路")
+  brand.font = Font.boldSystemFont(10)
+  brand.textColor = version.accentColor
 
   return w
 }
 
-// 執行
-const widgetSize = config.widgetFamily || "medium"
-const widget = await buildWidget(widgetSize)
+const widget = await buildWidget()
 
 if (config.runsInWidget) {
   Script.setWidget(widget)
 } else {
-  // 預覽模式
   await widget.presentMedium()
 }
 
