@@ -116,10 +116,17 @@ export default function ExploreView() {
               ))}
             </div>
             <div className="px-5 pb-4">
-              <div className="rounded-2xl p-4 text-center" style={{ background: "#FDF6E8" }}>
+              <div className="rounded-2xl p-4 text-center space-y-2" style={{ background: "#FDF6E8" }}>
                 <p className="text-xs text-stone-500">升級 Pro 解鎖</p>
-                <p className="text-sm font-semibold text-stone-700 mt-1">個人化 AI 每日訊息</p>
-                <p className="text-xs text-stone-400 mt-0.5">根據你的目標與挑戰量身撰寫</p>
+                <p className="text-sm font-semibold text-stone-700">個人化 AI 每日訊息</p>
+                <p className="text-xs text-stone-400">根據你的目標與挑戰量身撰寫</p>
+                <button
+                  onClick={() => setActiveSection("plans")}
+                  className="mt-1 w-full py-2.5 rounded-xl text-sm font-semibold text-white active:scale-95 transition-transform"
+                  style={{ backgroundColor: "#C4861A" }}
+                >
+                  升級 Pro →
+                </button>
               </div>
             </div>
           </div>
