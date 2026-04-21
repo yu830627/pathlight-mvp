@@ -3,60 +3,55 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import type { UserProfile } from "@/app/page";
 
-type Step = 1 | 2 | 3;
+const OCCUPATIONS = [
+  "學生", "上班族", "創業者 / 自由工作者", "主管 / 管理職",
+  "轉職中", "待業中", "其他",
+];
+
+const VALUES = [
+  "財務自由", "職涯成就", "健康與體能", "人際關係",
+  "創意與表達", "學習與成長", "家庭與陪伴", "社會影響力",
+];
 
 export default function OnboardingView({
   onComplete,
 }: {
   onComplete: (data: UserProfile) => void;
 }) {
-  const [step, setStep] = useState<Step>(1);
+  const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [mainGoal, setMainGoal] = useState("");
   const [currentChallenge, setCurrentChallenge] = useState("");
+  const [occupation, setOccupation] = useState("");
+  const [coreValue, setCoreValue] = useState("");
+
+  const totalSteps = 5;
+
+  const canNext = () => {
+    if (step === 1) return name.trim().length > 0;
+    if (step === 2) return mainGoal.trim().length > 0;
+    if (step === 3) return currentChallenge.trim().length > 0;
+    if (step === 4) return occupation.length > 0;
+    if (step === 5) return coreValue.length > 0;
+    return false;
+  };
 
   const handleNext = () => {
-    if (step === 1 && name.trim()) setStep(2);
-    else if (step === 2 && mainGoal.trim()) setStep(3);
-    else if (step === 3 && currentChallenge.trim()) {
-      onComplete({ name: name.trim(), mainGoal: mainGoal.trim(), currentChallenge: currentChallenge.trim() });
+    if (!canNext()) return;
+    if (step < totalSteps) {
+      setStep((s) => s + 1);
+    } else {
+      onComplete({
+        name: name.trim(),
+        mainGoal: mainGoal.trim(),
+        currentChallenge: currentChallenge.trim(),
+        occupation,
+        coreValue,
+      });
     }
   };
-
-  const steps = {
-    1: {
-      tag: "Step 1 of 3",
-      question: "你的名字是？",
-      placeholder: "輸入你的名字...",
-      value: name,
-      onChange: setName,
-      hint: "未來的你會直接叫你的名字",
-      isText: true,
-    },
-    2: {
-      tag: "Step 2 of 3",
-      question: "你最重要的一個人生目標是什麼？",
-      placeholder: "例如：轉職到產品設計、財務自由、完成第一本書...",
-      value: mainGoal,
-      onChange: setMainGoal,
-      hint: "說出你心裡最真實的那個，不必完美",
-      isText: false,
-    },
-    3: {
-      tag: "Step 3 of 3",
-      question: "你現在最大的卡關點是什麼？",
-      placeholder: "例如：不知道從哪裡開始、每天拖延、缺乏自信...",
-      value: currentChallenge,
-      onChange: setCurrentChallenge,
-      hint: "未來的你需要知道你現在卡在哪裡",
-      isText: false,
-    },
-  };
-
-  const config = steps[step];
 
   return (
     <div className="w-full max-w-lg space-y-8 animate-in fade-in duration-500">
@@ -73,11 +68,11 @@ export default function OnboardingView({
 
       {/* Progress */}
       <div className="flex gap-1.5">
-        {([1, 2, 3] as Step[]).map((s) => (
+        {Array.from({ length: totalSteps }, (_, i) => (
           <div
-            key={s}
+            key={i}
             className={`h-0.5 flex-1 rounded-full transition-all duration-500 ${
-              s <= step ? "bg-primary" : "bg-border"
+              i + 1 <= step ? "bg-primary" : "bg-border"
             }`}
           />
         ))}
@@ -85,36 +80,102 @@ export default function OnboardingView({
 
       <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader className="pb-3">
-          <p className="text-xs text-muted-foreground font-mono tracking-widest uppercase">{config.tag}</p>
-          <h2 className="text-xl font-semibold leading-snug mt-1">{config.question}</h2>
+          <p className="text-xs text-muted-foreground font-mono tracking-widest uppercase">
+            Step {step} of {totalSteps}
+          </p>
+
+          {step === 1 && <h2 className="text-xl font-semibold leading-snug mt-1">你的名字是？</h2>}
+          {step === 2 && <h2 className="text-xl font-semibold leading-snug mt-1">你最重要的一個人生目標是什麼？</h2>}
+          {step === 3 && <h2 className="text-xl font-semibold leading-snug mt-1">你現在最大的卡關點是什麼？</h2>}
+          {step === 4 && <h2 className="text-xl font-semibold leading-snug mt-1">你目前的身份 / 職業？</h2>}
+          {step === 5 && <h2 className="text-xl font-semibold leading-snug mt-1">你最核心的價值觀是？</h2>}
         </CardHeader>
+
         <CardContent className="space-y-4">
-          {config.isText ? (
+          {step === 1 && (
             <input
               type="text"
-              className="w-full bg-background/50 border border-border/50 rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 text-base transition-colors"
-              placeholder={config.placeholder}
-              value={config.value}
-              onChange={(e) => config.onChange(e.target.value)}
+              className="w-full bg-background/50 border border-border/50 rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 text-base transition-colors"
+              placeholder="輸入你的名字..."
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleNext()}
               autoFocus
             />
-          ) : (
-            <Textarea
-              className="min-h-[100px] resize-none bg-background/50 border-border/50 text-base focus:border-primary/50"
-              placeholder={config.placeholder}
-              value={config.value}
-              onChange={(e) => config.onChange(e.target.value)}
+          )}
+
+          {step === 2 && (
+            <textarea
+              className="w-full min-h-[100px] resize-none bg-background/50 border border-border/50 rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 text-base transition-colors"
+              placeholder="例如：轉職到產品設計、財務自由、完成第一本書..."
+              value={mainGoal}
+              onChange={(e) => setMainGoal(e.target.value)}
               autoFocus
             />
           )}
-          <p className="text-xs text-muted-foreground">{config.hint}</p>
+
+          {step === 3 && (
+            <textarea
+              className="w-full min-h-[100px] resize-none bg-background/50 border border-border/50 rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 text-base transition-colors"
+              placeholder="例如：不知道從哪裡開始、每天拖延、缺乏自信..."
+              value={currentChallenge}
+              onChange={(e) => setCurrentChallenge(e.target.value)}
+              autoFocus
+            />
+          )}
+
+          {step === 4 && (
+            <div className="grid grid-cols-2 gap-2">
+              {OCCUPATIONS.map((o) => (
+                <button
+                  key={o}
+                  onClick={() => setOccupation(o)}
+                  className="px-3 py-3 rounded-xl text-sm font-medium text-left transition-all border"
+                  style={
+                    occupation === o
+                      ? { background: "#C4861A", color: "white", borderColor: "#C4861A" }
+                      : { background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }
+                  }
+                >
+                  {o}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="grid grid-cols-2 gap-2">
+              {VALUES.map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setCoreValue(v)}
+                  className="px-3 py-3 rounded-xl text-sm font-medium text-left transition-all border"
+                  style={
+                    coreValue === v
+                      ? { background: "#C4861A", color: "white", borderColor: "#C4861A" }
+                      : { background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }
+                  }
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground">
+            {step === 1 && "未來的你會直接叫你的名字"}
+            {step === 2 && "說出你心裡最真實的那個，不必完美"}
+            {step === 3 && "未來的你需要知道你現在卡在哪裡"}
+            {step === 4 && "幫助 AI 更準確地理解你的處境"}
+            {step === 5 && "你最在乎的事，決定你最需要哪種引導"}
+          </p>
+
           <Button
             className="w-full font-medium bg-primary hover:bg-primary/90 transition-all"
             onClick={handleNext}
-            disabled={!config.value.trim()}
+            disabled={!canNext()}
           >
-            {step === 3 ? "開始引路" : "繼續 →"}
+            {step === totalSteps ? "開始引路 →" : "繼續 →"}
           </Button>
         </CardContent>
       </Card>

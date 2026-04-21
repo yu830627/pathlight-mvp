@@ -70,10 +70,26 @@ export default function FutureSelfChat({
   onBack: () => void;
   onResult: (completed: boolean, selfType: SelfType) => void;
 }) {
+  const DAILY_LIMIT = 10;
+
+  function getTodayChatCount(): number {
+    const today = new Date().toISOString().split("T")[0];
+    return parseInt(localStorage.getItem(`pathlight_chat_count_${today}`) || "0");
+  }
+  function incrementChatCount() {
+    const today = new Date().toISOString().split("T")[0];
+    const count = getTodayChatCount() + 1;
+    localStorage.setItem(`pathlight_chat_count_${today}`, String(count));
+    return count;
+  }
+
   const config = SELF_CONFIG[selfType];
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
   const userMessagesRef = useRef<string[]>([]);
+  const [chatCount, setChatCount] = useState(() => getTodayChatCount());
+  const remaining = DAILY_LIMIT - chatCount;
+  const isLimitReached = remaining <= 0;
 
   const memories = loadMemories().slice(0, 5);
 
@@ -106,9 +122,11 @@ export default function FutureSelfChat({
   }, [messages]);
 
   const handleSend = () => {
-    if (!input.trim() || status !== "ready") return;
+    if (!input.trim() || status !== "ready" || isLimitReached) return;
     userMessagesRef.current.push(input.trim());
     sendMessage({ text: input.trim() });
+    const newCount = incrementChatCount();
+    setChatCount(newCount);
     setInput("");
   };
 
@@ -148,11 +166,9 @@ export default function FutureSelfChat({
             <p className="text-xs" style={{ color: "#888" }}>{config.labelEn}</p>
           </div>
         </div>
-        {memories.length > 0 && (
-          <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.06)", color: "#666" }}>
-            記憶 {memories.length}
-          </span>
-        )}
+        <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ background: isLimitReached ? "rgba(220,38,38,0.1)" : "rgba(0,0,0,0.06)", color: isLimitReached ? "#DC2626" : "#666" }}>
+          {isLimitReached ? "已達今日上限" : `剩餘 ${remaining} 次`}
+        </span>
       </div>
 
       {/* Messages */}
@@ -209,6 +225,17 @@ export default function FutureSelfChat({
             ⚠️ {apiError}
           </div>
         )}
+        {isLimitReached && (
+          <div className="mx-2 px-4 py-3 rounded-2xl text-sm text-center space-y-1" style={{ background: "#FDF0D5", border: "1px solid #F0C060" }}>
+            <p className="font-semibold text-amber-800">今日對話已達 10 次上限</p>
+            <p className="text-xs text-amber-700">升級 Pro 解鎖無限對話，或明天再繼續。</p>
+          </div>
+        )}
+        {chatCount === 8 && !isLimitReached && (
+          <div className="mx-2 px-4 py-2 rounded-2xl text-xs text-center" style={{ background: "#F5F0E8", color: "#8B7355" }}>
+            💡 今天還剩 2 次對話。現在最重要的是採取行動！
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -245,11 +272,11 @@ export default function FutureSelfChat({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          disabled={status === "streaming"}
+          disabled={status === "streaming" || isLimitReached}
         />
         <button
           onClick={handleSend}
-          disabled={!input.trim() || status === "streaming"}
+          disabled={!input.trim() || status === "streaming" || isLimitReached}
           className="w-11 h-11 rounded-full flex items-center justify-center text-white transition-all active:scale-95 disabled:opacity-40"
           style={{ backgroundColor: config.accent }}
         >

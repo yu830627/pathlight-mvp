@@ -46,7 +46,7 @@ export default function ProfessionalRolesView() {
       <div className="mx-5 mb-5 rounded-3xl overflow-hidden" style={{ background: "linear-gradient(135deg, #1A2035, #2C3D35)" }}>
         <div className="p-5 space-y-2">
           <p className="text-xs font-semibold text-white/50 uppercase tracking-widest">Ultra Plan</p>
-          <p className="text-2xl font-bold text-white">NT$499 <span className="text-sm font-normal text-white/60">/ 月</span></p>
+          <p className="text-2xl font-bold text-white">NT$1,590 <span className="text-sm font-normal text-white/60">/ 月</span></p>
           <p className="text-sm text-white/70">解鎖以下所有專業功能，讓未來的你真正開始引導現在的你。</p>
           <button
             className="mt-2 w-full py-3 rounded-2xl text-sm font-semibold text-stone-800 active:scale-95 transition-transform"

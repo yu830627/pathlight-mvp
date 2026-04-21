@@ -107,10 +107,12 @@ function saveEntry(cardId: string, text: string) {
 
 export default function DashboardView({
   profile,
+  streak,
   onGoalSet,
   onOpenChat,
 }: {
   profile: UserProfile;
+  streak: number;
   onGoalSet: (goal: string) => void;
   onOpenChat: (type: SelfType) => void;
 }) {
@@ -224,11 +226,19 @@ export default function DashboardView({
 
   return (
     <div className="w-full max-w-xl pb-24 space-y-6 animate-in fade-in duration-500" style={{ background: "#EDE0CF", minHeight: "100vh" }}>
-      <div className="px-5 pt-14 pb-2">
-        <p className="text-xs text-stone-400 font-mono tracking-widest uppercase">引路 Pathlight</p>
-        <h1 className="text-xl font-semibold text-stone-700 mt-0.5">
-          你好，{profile.name}
-        </h1>
+      <div className="px-5 pt-14 pb-2 flex items-start justify-between">
+        <div>
+          <p className="text-xs text-stone-400 font-mono tracking-widest uppercase">引路 Pathlight</p>
+          <h1 className="text-xl font-semibold text-stone-700 mt-0.5">
+            你好，{profile.name}
+          </h1>
+        </div>
+        {streak > 0 && (
+          <div className="flex items-center gap-1 px-3 py-1.5 rounded-full mt-1" style={{ background: "#FDF0D5" }}>
+            <span className="text-sm">🔥</span>
+            <span className="text-xs font-bold text-amber-700">{streak} 天</span>
+          </div>
+        )}
       </div>
 
       {/* Swipeable Banner */}

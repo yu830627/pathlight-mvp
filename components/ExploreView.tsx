@@ -12,14 +12,14 @@ const PLANS = [
   },
   {
     name: "Pro",
-    price: "NT$199 / 月",
+    price: "NT$399 / 月",
     features: ["以上全部", "長期記憶 AI 學習", "決策分析報告", "每週進度摘要", "無限對話次數"],
     current: false,
     color: "#C4861A",
   },
   {
     name: "Ultra",
-    price: "NT$499 / 月",
+    price: "NT$1,590 / 月",
     features: ["以上全部", "AI Coach 一對一引導", "人生情境模擬", "人格升級包", "優先客服支援"],
     current: false,
     color: "#2C3D35",
