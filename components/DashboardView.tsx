@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 import type { UserProfile } from "@/app/page";
+
+type SelfType = "success" | "realistic" | "regret";
 
 const BANNERS = [
   {
@@ -68,9 +69,11 @@ type AiMessages = Partial<Record<"success" | "realistic" | "regret", { quote: st
 export default function DashboardView({
   profile,
   onGoalSet,
+  onOpenChat,
 }: {
   profile: UserProfile;
   onGoalSet: (goal: string) => void;
+  onOpenChat: (type: SelfType) => void;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [aiMessages, setAiMessages] = useState<AiMessages>({});
@@ -154,7 +157,11 @@ export default function DashboardView({
                 className="flex-none w-full snap-center"
                 style={{ paddingRight: 1 }}
               >
-                <div className="bg-white rounded-3xl shadow-sm p-5 flex gap-4 items-center" style={{ minHeight: 140 }}>
+                <button
+                  onClick={() => onOpenChat(banner.type)}
+                  className="w-full bg-white rounded-3xl shadow-sm p-5 flex gap-4 items-center text-left active:scale-[0.98] transition-transform duration-150"
+                  style={{ minHeight: 140 }}
+                >
                   {/* Photo */}
                   <div className="flex-none w-28 h-28 rounded-2xl overflow-hidden bg-stone-100">
                     <img
@@ -169,8 +176,11 @@ export default function DashboardView({
                       {content.quote}
                     </p>
                     <p className="text-sm text-stone-500 leading-snug">{content.sub}</p>
+                    <p className="text-xs text-stone-400 flex items-center gap-1">
+                      點擊與{["成功版", "現實版", "後悔版"][BANNERS.findIndex(b => b.type === banner.type)]}對話 →
+                    </p>
                   </div>
-                </div>
+                </button>
               </div>
             );
           })}

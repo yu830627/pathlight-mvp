@@ -5,6 +5,7 @@ import OnboardingView from "@/components/OnboardingView";
 import DashboardView from "@/components/DashboardView";
 import CheckInView from "@/components/CheckInView";
 import ResultView from "@/components/ResultView";
+import FutureSelfChat from "@/components/FutureSelfChat";
 import BottomNav, { type Tab } from "@/components/BottomNav";
 
 export type UserProfile = {
@@ -19,7 +20,8 @@ export type DailyRecord = {
   completed: boolean | null;
 };
 
-type View = "onboarding" | "dashboard" | "checkin" | "result";
+type View = "onboarding" | "dashboard" | "chat" | "checkin" | "result";
+type SelfType = "success" | "realistic" | "regret";
 
 function getTodayString() {
   return new Date().toISOString().split("T")[0];
@@ -40,6 +42,7 @@ export default function Home() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [todayRecord, setTodayRecord] = useState<DailyRecord | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("home");
+  const [chatSelfType, setChatSelfType] = useState<SelfType>("success");
 
   useEffect(() => {
     const savedProfile = localStorage.getItem("pathlight_profile");
@@ -54,7 +57,6 @@ export default function Home() {
     setProfile(parsedProfile);
 
     const today = getTodayString();
-
     if (savedRecord) {
       const parsed: DailyRecord = JSON.parse(savedRecord);
       if (parsed.date === today) {
@@ -67,7 +69,6 @@ export default function Home() {
         return;
       }
     }
-
     setView("dashboard");
   }, []);
 
@@ -77,15 +78,27 @@ export default function Home() {
     setView("dashboard");
   };
 
+  const handleOpenChat = (type: SelfType) => {
+    setChatSelfType(type);
+    setView("chat");
+  };
+
   const handleGoalSet = (goal: string) => {
-    const record: DailyRecord = {
-      date: getTodayString(),
-      goal,
-      completed: null,
-    };
+    const record: DailyRecord = { date: getTodayString(), goal, completed: null };
     localStorage.setItem("pathlight_today", JSON.stringify(record));
     setTodayRecord(record);
     setView("checkin");
+  };
+
+  const handleChatResult = (completed: boolean) => {
+    const record: DailyRecord = {
+      date: getTodayString(),
+      goal: "今天的目標",
+      completed,
+    };
+    localStorage.setItem("pathlight_today", JSON.stringify(record));
+    setTodayRecord(record);
+    setView("result");
   };
 
   const handleCheckIn = (completed: boolean) => {
@@ -102,7 +115,7 @@ export default function Home() {
     setView("dashboard");
   };
 
-  const showBottomNav = view !== "onboarding" && view !== null;
+  const showBottomNav = view !== "onboarding" && view !== "chat" && view !== null;
 
   if (view === null) {
     return (
@@ -121,18 +134,21 @@ export default function Home() {
           </div>
         )}
 
-        {view === "dashboard" && profile && activeTab === "home" && (
-          <DashboardView profile={profile} onGoalSet={handleGoalSet} />
+        {view === "chat" && profile && (
+          <FutureSelfChat
+            profile={profile}
+            selfType={chatSelfType}
+            onBack={() => setView("dashboard")}
+            onResult={handleChatResult}
+          />
         )}
-        {view === "dashboard" && activeTab === "explore" && (
-          <ComingSoon title="探索" />
+
+        {view === "dashboard" && activeTab === "home" && profile && (
+          <DashboardView profile={profile} onGoalSet={handleGoalSet} onOpenChat={handleOpenChat} />
         )}
-        {view === "dashboard" && activeTab === "roles" && (
-          <ComingSoon title="專業角色" />
-        )}
-        {view === "dashboard" && activeTab === "account" && (
-          <ComingSoon title="帳戶" />
-        )}
+        {view === "dashboard" && activeTab === "explore" && <ComingSoon title="探索" />}
+        {view === "dashboard" && activeTab === "roles" && <ComingSoon title="專業角色" />}
+        {view === "dashboard" && activeTab === "account" && <ComingSoon title="帳戶" />}
 
         {view === "checkin" && profile && todayRecord && (
           <div className="flex min-h-screen flex-col items-center justify-center p-4 w-full pb-28">
