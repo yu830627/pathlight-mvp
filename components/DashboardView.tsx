@@ -8,7 +8,7 @@ type SelfType = "success" | "realistic" | "regret";
 const BANNERS = [
   {
     type: "success" as const,
-    image: "https://1t3glvrash0h45y1.public.blob.vercel-storage.com/success-banner.png",
+    image: "https://1t3glvrash0h45y1.public.blob.vercel-storage.com/success-banner-v2.png",
     fallback: (name: string) => ({
       quote: `${name}，一個人的態度，\n決定他的高度。`,
       sub: "調整心態重新出發，你的韌性是你最強大的力量！",
@@ -16,7 +16,7 @@ const BANNERS = [
   },
   {
     type: "realistic" as const,
-    image: "https://1t3glvrash0h45y1.public.blob.vercel-storage.com/realistic-banner.png",
+    image: "https://1t3glvrash0h45y1.public.blob.vercel-storage.com/realistic-banner-v2.png",
     fallback: (name: string) => ({
       quote: `${name}，今天進步 1%，\n一年後的你會比現在強大 37 倍`,
       sub: "願意起步，就已經贏過還在猶豫的自己。",
@@ -24,7 +24,7 @@ const BANNERS = [
   },
   {
     type: "regret" as const,
-    image: "https://1t3glvrash0h45y1.public.blob.vercel-storage.com/regret-banner.png",
+    image: "https://1t3glvrash0h45y1.public.blob.vercel-storage.com/regret-banner-v2.png",
     fallback: (name: string) => ({
       quote: `${name}，後悔\n是最沒用的情緒`,
       sub: "假如有重新選擇的機會，你會怎樣做？",
