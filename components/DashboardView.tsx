@@ -178,7 +178,7 @@ export default function DashboardView({
             <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">今天</p>
             <textarea
               className="w-full min-h-[160px] rounded-2xl p-4 text-sm resize-none focus:outline-none shadow-sm"
-              style={{ background: "white", border: `2px solid ${activeCard.bg}20` }}
+              style={{ background: "white", border: `2px solid ${activeCard.bg}20`, color: "#1a1a1a" }}
               placeholder={activeCard.placeholder}
               value={cardText}
               onChange={(e) => setCardText(e.target.value)}
