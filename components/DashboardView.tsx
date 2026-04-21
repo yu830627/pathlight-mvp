@@ -8,23 +8,26 @@ type SelfType = "success" | "realistic" | "regret";
 const BANNERS = [
   {
     type: "success" as const,
+    image: "https://1t3glvrash0h45y1.public.blob.vercel-storage.com/success-banner.png",
     fallback: (name: string) => ({
       quote: `${name}，一個人的態度，\n決定他的高度。`,
-      sub: "你的每一步，都在建造未來的我。",
+      sub: "調整心態重新出發，你的韌性是你最強大的力量！",
     }),
   },
   {
     type: "realistic" as const,
+    image: "https://1t3glvrash0h45y1.public.blob.vercel-storage.com/realistic-banner.png",
     fallback: (name: string) => ({
-      quote: `${name}，不完美的行動，\n勝過完美的等待。`,
-      sub: "做到 30%，也比昨天的你更好。",
+      quote: `${name}，今天進步 1%，\n一年後的你會比現在強大 37 倍`,
+      sub: "願意起步，就已經贏過還在猶豫的自己。",
     }),
   },
   {
     type: "regret" as const,
+    image: "https://1t3glvrash0h45y1.public.blob.vercel-storage.com/regret-banner.png",
     fallback: (name: string) => ({
-      quote: `${name}，今天的「等等」，\n都是明天的遺憾。`,
-      sub: "你還有機會，選擇不同的路。",
+      quote: `${name}，後悔\n是最沒用的情緒`,
+      sub: "假如有重新選擇的機會，你會怎樣做？",
     }),
   },
 ];
@@ -165,7 +168,7 @@ export default function DashboardView({
                   {/* Photo */}
                   <div className="flex-none w-28 h-28 rounded-2xl overflow-hidden bg-stone-100">
                     <img
-                      src="https://1t3glvrash0h45y1.public.blob.vercel-storage.com/%E6%AF%94%E5%A4%A7%E6%8B%87%E6%8C%87%E7%89%88.png"
+                      src={banner.image}
                       alt="future self"
                       className="w-full h-full object-cover"
                     />
