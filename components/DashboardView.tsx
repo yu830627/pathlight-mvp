@@ -1,46 +1,69 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import type { UserProfile } from "@/app/page";
 
-const SELF_TYPES = [
+const BANNERS = [
   {
     type: "success" as const,
-    label: "成功版",
-    badgeClass: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-    cardClass: "border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent",
-    dotClass: "bg-amber-400",
-    description: "看見可能性的天花板",
-    fallback: (name: string) =>
-      `${name}，我知道你現在覺得很遠。但你每往前一步，都在縮短我們之間的距離。今天這一步，就是給我的禮物。`,
+    fallback: (name: string) => ({
+      quote: `${name}，一個人的態度，\n決定他的高度。`,
+      sub: "你的每一步，都在建造未來的我。",
+    }),
   },
   {
     type: "realistic" as const,
-    label: "現實版",
-    badgeClass: "bg-sky-500/20 text-sky-300 border-sky-500/30",
-    cardClass: "border-sky-500/20 bg-gradient-to-br from-sky-500/5 to-transparent",
-    dotClass: "bg-sky-400",
-    description: "最像真實的你",
-    fallback: (name: string) =>
-      `${name}，你不需要完美。今天做到 30% 也比昨天多。我走到這裡，是因為每一個「雖然不完美但我做了」累積出來的。`,
+    fallback: (name: string) => ({
+      quote: `${name}，不完美的行動，\n勝過完美的等待。`,
+      sub: "做到 30%，也比昨天的你更好。",
+    }),
   },
   {
     type: "regret" as const,
-    label: "後悔版",
-    badgeClass: "bg-red-500/20 text-red-300 border-red-500/30",
-    cardClass: "border-red-500/20 bg-gradient-to-br from-red-500/5 to-transparent",
-    dotClass: "bg-red-400",
-    description: "不行動的代價",
-    fallback: (name: string) =>
-      `${name}，你現在的「再等一下」，是我最後悔的那些時刻。我不是來嚇你的，只是希望你比我更勇敢一點。`,
+    fallback: (name: string) => ({
+      quote: `${name}，今天的「等等」，\n都是明天的遺憾。`,
+      sub: "你還有機會，選擇不同的路。",
+    }),
   },
 ];
 
-type AiMessages = { success?: string; realistic?: string; regret?: string };
+const FEATURE_CARDS = [
+  {
+    id: "notebook",
+    title: "人生筆記本",
+    desc: "紀錄發生什麼事",
+    icon: "◎",
+    bg: "#2C3D35",
+    placeholder: "今天發生了什麼？寫下來...",
+  },
+  {
+    id: "decision",
+    title: "決策日記",
+    desc: "今天的大決定？",
+    icon: "◈",
+    bg: "#3D5449",
+    placeholder: "今天你做了什麼決定？為什麼？",
+  },
+  {
+    id: "goal",
+    title: "目標追蹤",
+    desc: "好好保持紀錄！",
+    icon: "≡",
+    bg: "#6B3A2A",
+    placeholder: "今天的目標進展如何？",
+  },
+  {
+    id: "mood",
+    title: "情緒紀錄",
+    desc: "寫下你今天的心情",
+    icon: "◉",
+    bg: "#7A5C22",
+    placeholder: "今天的心情是？發生了什麼讓你有這種感受？",
+  },
+];
+
+type AiMessages = Partial<Record<"success" | "realistic" | "regret", { quote: string; sub: string }>>;
 
 export default function DashboardView({
   profile,
@@ -49,175 +72,156 @@ export default function DashboardView({
   profile: UserProfile;
   onGoalSet: (goal: string) => void;
 }) {
-  const [goal, setGoal] = useState("");
-  const [activeType, setActiveType] = useState<"success" | "realistic" | "regret">("success");
+  const [activeIndex, setActiveIndex] = useState(0);
   const [aiMessages, setAiMessages] = useState<AiMessages>({});
-  const [loadingType, setLoadingType] = useState<string | null>(null);
-  const [goalSubmitted, setGoalSubmitted] = useState(false);
+  const [openCard, setOpenCard] = useState<string | null>(null);
+  const [cardText, setCardText] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const active = SELF_TYPES.find((s) => s.type === activeType)!;
-
-  const greeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return "早安";
-    if (h < 18) return "午安";
-    return "晚安";
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const idx = Math.round(scrollRef.current.scrollLeft / scrollRef.current.offsetWidth);
+    setActiveIndex(idx);
   };
 
-  const fetchAiMessage = async (type: "success" | "realistic" | "regret", goalText: string) => {
-    if (aiMessages[type]) return;
-    setLoadingType(type);
-    try {
-      const res = await fetch("/api/future-self", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: profile.name,
-          mainGoal: profile.mainGoal,
-          currentChallenge: profile.currentChallenge,
-          todayGoal: goalText,
-          type,
-        }),
-      });
-      const data = await res.json();
-      if (data.message) {
-        setAiMessages((prev) => ({ ...prev, [type]: data.message }));
-      }
-    } catch {
-      // fallback messages shown on error
-    } finally {
-      setLoadingType(null);
-    }
+  const scrollTo = (i: number) => {
+    scrollRef.current?.scrollTo({ left: i * (scrollRef.current.offsetWidth), behavior: "smooth" });
   };
 
-  const handleGoalSubmit = async () => {
-    if (!goal.trim()) return;
-    setGoalSubmitted(true);
-    // Pre-fetch all three in background
-    fetchAiMessage("success", goal.trim());
-    fetchAiMessage("realistic", goal.trim());
-    fetchAiMessage("regret", goal.trim());
+  const getBannerContent = (banner: typeof BANNERS[0]) => {
+    const ai = aiMessages[banner.type];
+    return ai ?? banner.fallback(profile.name);
   };
 
-  const handleTabChange = (type: "success" | "realistic" | "regret") => {
-    setActiveType(type);
-    if (goalSubmitted && goal.trim()) {
-      fetchAiMessage(type, goal.trim());
-    }
-  };
+  const activeCard = FEATURE_CARDS.find((c) => c.id === openCard);
 
-  const currentMessage =
-    aiMessages[activeType] ?? (goalSubmitted ? null : active.fallback(profile.name));
-
-  const isLoading = loadingType === activeType;
+  if (openCard && activeCard) {
+    return (
+      <div className="w-full max-w-xl min-h-screen flex flex-col" style={{ background: "#EDE0CF" }}>
+        <div className="flex items-center gap-3 p-5 pt-12">
+          <button onClick={() => { setOpenCard(null); setCardText(""); }} className="text-sm text-muted-foreground">
+            ← 返回
+          </button>
+          <h2 className="text-lg font-bold" style={{ color: activeCard.bg }}>{activeCard.title}</h2>
+        </div>
+        <div className="flex-1 px-5 space-y-4">
+          <p className="text-sm text-muted-foreground">{activeCard.desc}</p>
+          <textarea
+            className="w-full min-h-[200px] rounded-2xl p-4 text-base resize-none focus:outline-none border border-white/60 bg-white/80"
+            placeholder={activeCard.placeholder}
+            value={cardText}
+            onChange={(e) => setCardText(e.target.value)}
+            autoFocus
+          />
+          <button
+            onClick={() => {
+              if (activeCard.id === "goal" && cardText.trim()) onGoalSet(cardText.trim());
+              setOpenCard(null);
+              setCardText("");
+            }}
+            className="w-full py-3 rounded-2xl font-semibold text-white text-sm"
+            style={{ backgroundColor: activeCard.bg }}
+          >
+            儲存
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full max-w-xl space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="space-y-1">
-        <span className="text-xs text-muted-foreground font-mono tracking-widest uppercase">引路 Pathlight</span>
-        <h1 className="text-2xl font-semibold mt-1">
-          {greeting()}，{profile.name}
+    <div className="w-full max-w-xl pb-24 space-y-6 animate-in fade-in duration-500" style={{ background: "#EDE0CF", minHeight: "100vh" }}>
+      <div className="px-5 pt-14 pb-2">
+        <p className="text-xs text-stone-400 font-mono tracking-widest uppercase">引路 Pathlight</p>
+        <h1 className="text-xl font-semibold text-stone-700 mt-0.5">
+          你好，{profile.name}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          目標：<span className="text-foreground/70">{profile.mainGoal}</span>
-        </p>
       </div>
 
-      {/* Future Self Tabs */}
-      <div className="space-y-3">
-        <p className="text-xs text-muted-foreground uppercase tracking-widest">三種未來的你</p>
+      {/* Swipeable Banner */}
+      <div className="space-y-3 px-5">
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex overflow-x-auto snap-x snap-mandatory"
+          style={{ scrollbarWidth: "none", gap: 0 }}
+        >
+          {BANNERS.map((banner) => {
+            const content = getBannerContent(banner);
+            return (
+              <div
+                key={banner.type}
+                className="flex-none w-full snap-center"
+                style={{ paddingRight: 1 }}
+              >
+                <div className="bg-white rounded-3xl shadow-sm p-5 flex gap-4 items-center" style={{ minHeight: 140 }}>
+                  {/* Photo */}
+                  <div className="flex-none w-28 h-28 rounded-2xl overflow-hidden bg-stone-100">
+                    <img
+                      src="https://1t3glvrash0h45y1.public.blob.vercel-storage.com/%E6%AF%94%E5%A4%A7%E6%8B%87%E6%8C%87%E7%89%88.png"
+                      alt="future self"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  {/* Text */}
+                  <div className="flex-1 space-y-2">
+                    <p className="text-xl font-bold text-stone-800 leading-snug whitespace-pre-line">
+                      {content.quote}
+                    </p>
+                    <p className="text-sm text-stone-500 leading-snug">{content.sub}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-        <div className="flex gap-2">
-          {SELF_TYPES.map((s) => (
+        {/* Dots */}
+        <div className="flex justify-center gap-2">
+          {BANNERS.map((_, i) => (
             <button
-              key={s.type}
-              onClick={() => handleTabChange(s.type)}
-              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-medium border transition-all duration-200 ${
-                activeType === s.type
-                  ? s.badgeClass + " scale-[1.02] shadow-sm"
-                  : "border-border/40 text-muted-foreground hover:border-border bg-card/30"
+              key={i}
+              onClick={() => scrollTo(i)}
+              className={`rounded-full transition-all duration-300 ${
+                activeIndex === i ? "w-5 h-2 bg-stone-500" : "w-2 h-2 bg-stone-300"
               }`}
-            >
-              <span className="flex items-center justify-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${s.dotClass} ${activeType === s.type ? "opacity-100" : "opacity-40"}`} />
-                {s.label}
-              </span>
-            </button>
+            />
           ))}
         </div>
+      </div>
 
-        {/* Message Card */}
-        <Card className={`${active.cardClass} border min-h-[110px] transition-all duration-300`}>
-          <CardHeader className="pb-2 pt-4">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className={`text-xs ${active.badgeClass}`}>
-                {active.label}
-              </Badge>
-              <span className="text-xs text-muted-foreground">{active.description}</span>
-            </div>
-          </CardHeader>
-          <CardContent className="pb-4">
-            {isLoading ? (
-              <div className="space-y-2 animate-pulse">
-                <div className="h-3 bg-foreground/10 rounded w-full" />
-                <div className="h-3 bg-foreground/10 rounded w-4/5" />
-                <div className="h-3 bg-foreground/10 rounded w-3/5" />
+      {/* 4 Feature Cards */}
+      <div className="px-5 grid grid-cols-2 gap-3">
+        {FEATURE_CARDS.map((card) => (
+          <button
+            key={card.id}
+            onClick={() => setOpenCard(card.id)}
+            className="rounded-3xl overflow-hidden text-left transition-transform duration-200 active:scale-95"
+            style={{ backgroundColor: card.bg, minHeight: 160 }}
+          >
+            <div className="p-4 space-y-2">
+              {/* Icon + Title */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-sm font-bold">
+                    {card.icon}
+                  </div>
+                  <span className="text-white font-semibold text-sm">{card.title}</span>
+                </div>
+                <span className="text-white/60 text-sm">↩</span>
               </div>
-            ) : currentMessage ? (
-              <p className="text-sm leading-relaxed text-foreground/85 italic">
-                &ldquo;{currentMessage}&rdquo;
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">
-                設定今天的目標後，未來的你會有話說...
-              </p>
-            )}
-          </CardContent>
-        </Card>
+              {/* CTA Button */}
+              <div className="inline-block bg-white rounded-full px-3 py-1.5">
+                <span className="text-xs font-semibold" style={{ color: card.bg }}>{card.desc}</span>
+              </div>
+            </div>
+            {/* Bottom decorative area */}
+            <div className="h-16 opacity-20" style={{
+              background: "linear-gradient(to bottom, transparent, rgba(0,0,0,0.3))"
+            }} />
+          </button>
+        ))}
       </div>
-
-      {/* Today's Goal */}
-      <div className="space-y-3">
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest">今天的一步</p>
-          <p className="text-sm text-muted-foreground mt-1">不需要做很多，只要今天能做到的那一步</p>
-        </div>
-        <Textarea
-          className="min-h-[80px] resize-none bg-card/30 text-base border-border/40 focus:border-primary/50 transition-colors"
-          placeholder="例如：寫完一頁企劃書、運動 20 分鐘、傳一封 email..."
-          value={goal}
-          onChange={(e) => {
-            setGoal(e.target.value);
-            setGoalSubmitted(false);
-            setAiMessages({});
-          }}
-          disabled={goalSubmitted && Object.keys(aiMessages).length > 0}
-        />
-
-        {!goalSubmitted ? (
-          <Button
-            className="w-full font-medium"
-            onClick={handleGoalSubmit}
-            disabled={!goal.trim()}
-          >
-            讓未來的我來說話
-          </Button>
-        ) : (
-          <Button
-            className="w-full font-medium"
-            onClick={() => onGoalSet(goal.trim())}
-          >
-            我今天要做到這件事
-          </Button>
-        )}
-      </div>
-
-      {goalSubmitted && (
-        <p className="text-center text-xs text-muted-foreground animate-in fade-in duration-500">
-          今天結束前，回來告訴未來的自己你做到了
-        </p>
-      )}
     </div>
   );
 }
