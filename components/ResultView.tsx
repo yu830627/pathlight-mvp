@@ -26,7 +26,7 @@ const REGRET_MESSAGES = [
 function getVideoSrc(record: DailyRecord): string {
   if (record.completed) {
     if (record.selfType === "realistic") return `${BLOB}/realistic.mp4`;
-    return `${BLOB}/success.mp4`;
+    return `${BLOB}/success-v2.mp4`;
   }
   return `${BLOB}/regret.mp4`;
 }
