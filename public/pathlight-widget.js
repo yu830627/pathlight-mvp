@@ -13,6 +13,7 @@
 const NAME = "你的名字"   // ← 改成你的名字
 const GOAL = "你的目標"   // ← 改成你的目標
 const APP_URL = "https://pathlight-mvp-ffo2.vercel.app"
+const PHOTO_URL = ""      // ← 貼上你的照片網址（留空則顯示名字縮寫）
 // ─────────────────────────────────────────
 
 const VERSIONS = {
@@ -117,6 +118,55 @@ async function buildWidget(size) {
   brand.textColor = new Color("#C4861A")
 
   w.addSpacer(10)
+
+  // ── 照片頭像 ──
+  const avatarRow = w.addStack()
+  avatarRow.layoutHorizontally()
+  avatarRow.centerAlignContent()
+
+  if (PHOTO_URL) {
+    try {
+      const req = new Request(PHOTO_URL)
+      const img = await req.loadImage()
+      const avatarStack = avatarRow.addStack()
+      avatarStack.size = new Size(44, 44)
+      avatarStack.cornerRadius = 22
+      avatarStack.backgroundImage = img
+    } catch (e) {
+      // 載入失敗則顯示縮寫
+      const avatarStack = avatarRow.addStack()
+      avatarStack.size = new Size(44, 44)
+      avatarStack.cornerRadius = 22
+      avatarStack.backgroundColor = new Color(version.accentHex + "44")
+      avatarStack.centerAlignContent()
+      avatarStack.layoutHorizontally()
+      avatarStack.addSpacer()
+      const initText = avatarStack.addText(NAME.slice(0, 1))
+      initText.font = Font.boldSystemFont(18)
+      initText.textColor = version.accent
+      avatarStack.addSpacer()
+    }
+  } else {
+    const avatarStack = avatarRow.addStack()
+    avatarStack.size = new Size(44, 44)
+    avatarStack.cornerRadius = 22
+    avatarStack.backgroundColor = new Color(version.accentHex + "44")
+    avatarStack.centerAlignContent()
+    avatarStack.layoutHorizontally()
+    avatarStack.addSpacer()
+    const initText = avatarStack.addText(NAME.slice(0, 1))
+    initText.font = Font.boldSystemFont(18)
+    initText.textColor = version.accent
+    avatarStack.addSpacer()
+  }
+
+  avatarRow.addSpacer(10)
+
+  const nameLabel = avatarRow.addText(NAME)
+  nameLabel.font = Font.boldSystemFont(14)
+  nameLabel.textColor = Color.white()
+
+  w.addSpacer(8)
 
   // ── 語錄 ──
   const quoteEl = w.addText(quote)
