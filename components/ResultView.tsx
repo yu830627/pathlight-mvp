@@ -28,8 +28,7 @@ function getVideoSrc(record: DailyRecord): string {
     if (record.selfType === "realistic") return `${BLOB}/realistic.mp4`;
     return `${BLOB}/success-v2.mp4`;
   }
-  if (record.selfType === "regret") return `${BLOB}/regret-v2-new.mp4`;
-  return `${BLOB}/regret.mp4`;
+  return `${BLOB}/regret-v2-new.mp4`;
 }
 
 function getMessage(record: DailyRecord): string {
@@ -62,6 +61,10 @@ export default function ResultView({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
+
+  const handlePlay = () => {
+    videoRef.current?.play().then(() => setVideoPlaying(true)).catch(() => {});
+  };
 
   useEffect(() => {
     const v = videoRef.current;
